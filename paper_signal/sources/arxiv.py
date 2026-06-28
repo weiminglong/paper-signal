@@ -4,6 +4,8 @@ import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
 from datetime import datetime
+from math import ceil
+from time import sleep
 
 from paper_signal.models import Paper
 
@@ -12,7 +14,28 @@ ATOM_NS = {"atom": "http://www.w3.org/2005/Atom"}
 
 
 def search_arxiv(categories: list[str], max_results: int) -> list[Paper]:
-    query = _build_query(categories)
+    categories = categories or ["cs.AI"]
+    per_category_limit = max(1, ceil(max_results / len(categories)))
+    papers_by_id: dict[str, Paper] = {}
+
+    for index, category in enumerate(categories):
+        papers = _search_arxiv_query(
+            query=_build_query([category]),
+            max_results=per_category_limit,
+        )
+        for paper in papers:
+            papers_by_id.setdefault(paper.paper_id, paper)
+        if index < len(categories) - 1:
+            sleep(0.5)
+
+    return sorted(
+        papers_by_id.values(),
+        key=lambda paper: paper.published,
+        reverse=True,
+    )[:max_results]
+
+
+def _search_arxiv_query(query: str, max_results: int) -> list[Paper]:
     params = {
         "search_query": query,
         "start": "0",

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from datetime import datetime, timezone
 
 from paper_signal.models import AppConfig, Paper, ScoredPaper
@@ -19,16 +20,19 @@ def score_paper(paper: Paper, config: AppConfig) -> ScoredPaper:
     score = 0.0
 
     for domain in config.research_domains:
-        domain_score = 0.0
+        keyword_score = 0.0
         for keyword in domain.keywords:
-            keyword_lower = keyword.lower()
-            if keyword_lower in paper.title.lower():
-                domain_score += 1.2
+            if _contains_keyword(paper.title, keyword):
+                keyword_score += 1.2
                 matched_keywords.add(keyword)
-            elif keyword_lower in text:
-                domain_score += 0.7
+            elif _contains_keyword(text, keyword):
+                keyword_score += 0.7
                 matched_keywords.add(keyword)
 
+        if keyword_score == 0:
+            continue
+
+        domain_score = keyword_score
         category_matches = set(domain.arxiv_categories).intersection(paper.categories)
         if category_matches:
             domain_score += 0.5 * len(category_matches)
@@ -38,6 +42,15 @@ def score_paper(paper: Paper, config: AppConfig) -> ScoredPaper:
             weighted = domain_score * max(domain.priority, 1)
             score += weighted
             reasons.append(f"{domain.name}: {weighted:.1f} relevance points")
+
+    if not matched_domains:
+        return ScoredPaper(
+            paper=paper,
+            score=0.0,
+            matched_domains=[],
+            matched_keywords=[],
+            reasons=[],
+        )
 
     days_old = _days_old(paper)
     if days_old <= 7:
@@ -61,7 +74,23 @@ def score_paper(paper: Paper, config: AppConfig) -> ScoredPaper:
 
 def _is_excluded(paper: Paper, config: AppConfig) -> bool:
     text = f"{paper.title}\n{paper.abstract}".lower()
-    return any(keyword.lower() in text for keyword in config.excluded_keywords)
+    return any(_contains_keyword(text, keyword) for keyword in config.excluded_keywords)
+
+
+def _contains_keyword(text: str, keyword: str) -> bool:
+    normalized_keyword = " ".join(keyword.lower().split())
+    normalized_text = " ".join(text.lower().split())
+    if not normalized_keyword:
+        return False
+    if _is_ascii_word_phrase(normalized_keyword):
+        escaped_keyword = re.escape(normalized_keyword).replace(r"\ ", r"\s+")
+        pattern = rf"(?<![a-z0-9]){escaped_keyword}(?![a-z0-9])"
+        return re.search(pattern, normalized_text) is not None
+    return normalized_keyword in normalized_text
+
+
+def _is_ascii_word_phrase(value: str) -> bool:
+    return re.fullmatch(r"[a-z0-9][a-z0-9.+#/-]*(\s+[a-z0-9][a-z0-9.+#/-]*)*", value) is not None
 
 
 def _days_old(paper: Paper) -> int:

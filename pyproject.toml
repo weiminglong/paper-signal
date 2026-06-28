@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "paper-signal"
+version = "0.1.0"
+description = "Local-first research paper agent for daily Obsidian notes"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "MIT" }
+authors = [
+  { name = "Weiming Long" }
+]
+dependencies = [
+  "jinja2>=3.1",
+  "pyyaml>=6.0"
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+  "ruff>=0.6"
+]
+
+[project.scripts]
+paper-signal = "paper_signal.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["paper_signal*"]
+
+[tool.setuptools.package-data]
+"paper_signal.obsidian.templates" = ["*.md.j2"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py39"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

@@ -1,0 +1,19 @@
+name: Daily PaperSignal
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 23 * * *"
+
+jobs:
+  daily-read:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - run: paper-signal run --config config/interests.example.yaml --vault "$RUNNER_TEMP/vault" --dry-run

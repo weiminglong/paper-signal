@@ -1,0 +1,60 @@
+language: "en"
+vault_path: ""
+
+daily:
+  candidate_limit: 100
+  recommendation_count: 10
+  deep_analysis_count: 3
+  skip_seen: true
+
+sources:
+  arxiv:
+    enabled: true
+    categories:
+      - "cs.AI"
+      - "cs.CL"
+      - "cs.LG"
+      - "cs.CV"
+
+research_domains:
+  "Agents":
+    priority: 5
+    keywords:
+      - "agent"
+      - "multi-agent"
+      - "tool use"
+      - "planning"
+      - "workflow"
+      - "autonomous"
+    arxiv_categories:
+      - "cs.AI"
+      - "cs.CL"
+
+  "Reasoning":
+    priority: 4
+    keywords:
+      - "reasoning"
+      - "chain-of-thought"
+      - "verification"
+      - "test-time compute"
+      - "planning"
+    arxiv_categories:
+      - "cs.AI"
+      - "cs.CL"
+      - "cs.LG"
+
+  "Multimodal":
+    priority: 3
+    keywords:
+      - "multimodal"
+      - "vision-language"
+      - "VLM"
+      - "image-text"
+      - "visual grounding"
+    arxiv_categories:
+      - "cs.CV"
+      - "cs.CL"
+      - "cs.MM"
+
+excluded_keywords:
+  - "workshop"

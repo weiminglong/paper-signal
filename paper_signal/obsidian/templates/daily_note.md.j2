@@ -1,0 +1,52 @@
+---
+date: "{{ run_date.isoformat() }}"
+tags: ["daily-paper-read", "paper-signal", "llm-generated"]
+paper_count: {{ papers | length }}
+---
+
+# Daily Paper Read - {{ run_date.isoformat() }}
+
+## Today's Overview
+
+PaperSignal reviewed recent papers for: {{ domains }}.
+
+{% if papers %}
+Top recommendation: **{{ papers[0].paper.title }}** with score {{ papers[0].score }}.
+{% else %}
+No matching papers were found for today's configuration.
+{% endif %}
+
+## Priority Reads
+
+{% for item in papers %}
+### {{ loop.index }}. {{ item.paper.title }}
+
+- **Score**: {{ item.score }}
+- **Authors**: {{ item.paper.authors | join(", ") }}
+- **Published**: {{ item.paper.published.date().isoformat() }}
+- **Categories**: {{ item.paper.categories | join(", ") }}
+- **Matched Domains**: {{ item.matched_domains | join(", ") if item.matched_domains else "--" }}
+- **Matched Keywords**: {{ item.matched_keywords | join(", ") if item.matched_keywords else "--" }}
+- **Links**: [arXiv]({{ item.paper.arxiv_url }}) | [PDF]({{ item.paper.pdf_url }})
+
+**Why selected**: {{ item.reasons | join("; ") if item.reasons else "--" }}
+
+**Agent Panel**
+
+- **Relevance**: {{ item.panel.relevance_agent }}
+- **Method**: {{ item.panel.method_agent }}
+- **Skeptic**: {{ item.panel.skeptic_agent }}
+- **Knowledge Base**: {{ item.panel.knowledge_base_agent }}
+- **Moderator**: {{ item.panel.moderator }}
+
+**Abstract**: {{ item.paper.abstract }}
+
+---
+
+{% endfor %}
+
+## Reading Queue
+
+{% for item in papers[:config.daily.deep_analysis_count] %}
+- [ ] {{ item.paper.title }} - {{ item.paper.paper_id }}
+{% endfor %}

@@ -98,7 +98,8 @@ skim/skip group.
 
 ### 5. Write the daily note
 
-Author the file at `daily_note_path` yourself (Write tool). Structure:
+Author the file at `daily_note_path` yourself (Write tool). Optimize for a human skimming
+at breakfast: plain-English cards up top, the dense debate collapsed. Structure:
 
 ```markdown
 ---
@@ -110,22 +111,28 @@ deep_count: <deep_analysis_count>
 
 # Daily Paper Read — <run_date>
 
-## Today's Synthesis
-<briefing + ASCII knowledge network + top 3>
+> **<TL;DR banner: N papers on <theme>. X deep reads, Y to skim.>**
+> **Today's thread:** <one plain sentence>
 
-## Round-Table Analyses
-<one block per deep paper, per the roundtable.md output contract — distill each round
-into a few bullets in the Moderator's voice; do NOT paste every persona statement verbatim>
+## At a glance
+<the scannable table from daily_synthesis.md — nickname, topic, verdict icon, plain gist>
 
-## Triage
-<one line per non-deep paper>
+## The papers
+<one plain-English card per paper, per the roundtable.md output contract: Topic / In plain
+terms / Why it matters / The catch / Verdict, with the round-table debate inside a
+<details> block. Deep papers get the full debate; triaged papers get just the card (no
+<details>). Order by verdict: deep-read first.>
 
-## Reading Queue
+## Reading queue
 - [ ] <title> — [[<paper_id>|short title]]   (deep-read verdicts first)
 ```
 
-Obsidian conventions (see `AGENTS.md`): valid YAML frontmatter, wikilinks with aliases,
-`--` for missing data (not `---` inside the body), accurate tags.
+Readability is the point: no unexplained acronyms in the cards, verdict icons
+(📖 deep-read · 👀 skim · 📥 queue · ⏭️ skip), and the ASCII charts / round-by-round debate
+live inside `<details>` so the note reads clean but the depth is one click away. Obsidian
+conventions (see `AGENTS.md`): valid YAML frontmatter, wikilinks with aliases, `--` for
+missing data (not `---` inside the body), accurate tags. `<details>`/`<summary>` render in
+Obsidian's reading view — leave a blank line after `<summary>` and before `</details>`.
 
 ### 6. Commit & report
 

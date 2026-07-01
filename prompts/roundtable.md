@@ -111,41 +111,53 @@ Force field (for / against prioritizing):
 
 ## Output contract (per paper)
 
-The Moderator runs the full panel (every persona speaks both rounds), but in the note it
-**distills** each round into a few bullets in its own voice — it does **not** paste every
-persona's verbatim statement. The depth lives in the synthesis, not in transcript length.
+**Lead with a plain-English card anyone can skim; tuck the dialectic into a collapsible
+block.** The panel still argues in full, but the note opens with a jargon-free summary and
+hides the debate behind `<details>` so the depth is available on demand, never in the way.
+
+Verdict icons: 📖 deep-read · 👀 skim · 📥 queue · ⏭️ skip.
 
 ```
-### <rank>. <title>   [verdict: deep-read | confidence: high]
+### <verdict icon> <rank>. <short title>
 
-- **Score / matches**: <score> · domains: <…> · keywords: <…>
-- **Links**: [arXiv](…) | [PDF](…)
+**Topic:** <3–6 everyday words — what area this is in>
+**In plain terms:** <2–3 jargon-free sentences: what they actually did>
+**Why it matters:** <1 sentence>
+**The catch:** <1 sentence — the main caveat, in plain terms>
+**Verdict:** <icon> <deep-read|skim|queue|skip> · <confidence> — <one-line rationale>
+🔗 [arXiv](…) · [PDF](…)
 
-**Panel**: Methodologist (INTJ), Empiricist (ISTJ), Skeptic (ENTP), Connector (ENFP)
+<details>
+<summary>🎙️ Round-table debate — 4 perspectives cross-examine this paper</summary>
 
-**Round 1 — positions**  *(Moderator's distillation, ~1 line per lens)*
-- **Methodologist**: <the distinct point, in the Moderator's words>
-- **Empiricist**: <…>
-- **Skeptic**: <…>
-- **Connector**: <…>
+**Round 1 — positions**  *(one line per lens, in the Moderator's words)*
+- **The Methodologist**: <…>
+- **The Empiricist**: <…>
+- **The Skeptic**: <…>
+- **The Connector**: <…>
 - *Divergence:* <the one axis they split on>
 
-**Core contradiction**: <one line>
+**Core contradiction:** <one line>
 
-<ascii chart>
+<ascii framework chart, fenced>
 
-**Round 2 — after rebuttal**  *(2–3 bullets)*
-- <what shifted, who conceded, what hardened>
+**Round 2 — after rebuttal**  *(2–3 bullets: what shifted / conceded / hardened)*
+- <…>
 
-**Moderator's read**: <resolution / what stays honestly open>
+**Moderator's read:** <resolution / what stays honestly open>
 
-**Verdict**: deep-read · high — <one-line rationale>
+**Related:** [[…]], [[…]]
 
-**Knowledge network**: [[…]], [[…]] — <why these>
+<full abstract>
 
-**Abstract**: <full abstract>
+</details>
 ```
 
-Keep it tight: signal over length. A reader should decide in 20 seconds whether to open
-the paper, and have a real argument to fall back on. If you want the full verbatim
-transcript, store it in the per-paper deep note, not the daily digest.
+Readability rules for the card:
+- No unexplained acronyms or in-group jargon in the plain-English lines — expand or avoid
+  them ("dense supervision" → "scoring an agent's individual steps"). Assume a smart reader
+  from a *different* subfield.
+- The card should stand alone: a reader decides read/skip from it in ~15 seconds without
+  opening the debate.
+- Keep the debate distilled (not verbatim) and honest. The full verbatim transcript, if
+  wanted, belongs in the per-paper deep note, not here.

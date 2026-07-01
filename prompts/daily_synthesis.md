@@ -1,32 +1,36 @@
 # Daily Synthesis Prompt
 
-After the per-paper round-tables finish, the Moderator writes the top of the daily note:
-a cross-paper briefing that turns the day's papers into one structured read. This echoes
-the round-table's closing move — `generate-knowledge-network` — at the level of the whole
-day rather than a single paper.
+After the per-paper round-tables finish, the Moderator writes the **top of the note** — the
+part most people read first and often only. Optimize it for a busy human skimming their
+morning digest, not for a reviewer.
 
-Produce:
+Produce, in this order:
 
-- **Today's signal** — the one or two threads connecting today's papers (a shared
-  problem, a converging method, a disagreement between papers). One short paragraph.
-- **Knowledge network** — a small **ASCII diagram** linking today's papers to each other
-  and to existing vault notes/threads. Nodes are paper short-titles or `[[note]]` names;
-  edges are the relationship (extends, contradicts, applies, same-method). Keep it dense
-  and honest — connect only what genuinely connects.
-- **Top 3 to read first** — ranked, each with one line of *why* (drawn from its verdict
-  and the contradiction the round-table found), as `[[wikilinks]]` to the deep notes.
-- **Skim / skip** — one line grouping the rest, so the reader knows what was considered
-  and consciously set aside (no silent dropping).
+- **TL;DR banner** — a 1–2 line blockquote: how many papers, how many worth a real read,
+  and today's thread in one plain sentence. Example:
+  `> **3 papers on LLM agents & reliability.** 2 worth a deep read, 1 to skim.`
+  `> **Today's thread:** papers that grade themselves — when the metric and the target are`
+  `> the same thing, a "win" can be an illusion.`
 
-Example knowledge network:
+- **At a glance** — a scannable table so the whole day fits on one screen:
 
-```
-  [[Routing-MoE]] ──extends──► (Paper 1: cheap MoE routing)
-        │ same-method
-        ▼
-  (Paper 3: router distillation) ──contradicts──► (Paper 2: dense > sparse)
-```
+  | # | Paper | Topic | Read? | The gist |
+  |---|-------|-------|-------|----------|
+  | 1 | QVal | Scoring agent steps | 📖 Deep read | <=18-word plain one-liner |
+  | 2 | RLMF | Honest AI uncertainty | 📖 Deep read | … |
+  | 3 | Table errors | LLM table reliability | 👀 Skim | … |
 
-Use Obsidian markdown, valid YAML frontmatter, `[[wikilinks]]` with aliases, and `--`
-for missing data. Be concise: the synthesis should be readable in under a minute and make
-the reader feel oriented, not buried.
+  Use short paper nicknames, everyday topic labels, and verdict icons
+  (📖 deep-read · 👀 skim · 📥 queue · ⏭️ skip). The gist must be jargon-free.
+
+- **Today's thread** — one short, plain paragraph naming the one or two ideas connecting
+  today's papers. No acronyms without expansion.
+
+- **The map** *(optional, collapsible)* — if a genuine structure connects the papers, put a
+  compact ASCII knowledge network inside a `<details><summary>🗺️ How today's papers connect</summary>`
+  block (nodes = short titles or `[[notes]]`, edges = extends/contradicts/applies/same-method).
+  Connect only what genuinely connects; skip the map if it would be forced.
+
+Use Obsidian markdown, valid YAML frontmatter, `[[wikilinks]]` with aliases, and `--` for
+missing data. The whole top section should be readable in under a minute and leave the
+reader knowing exactly what to open first.

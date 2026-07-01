@@ -95,6 +95,9 @@ the Moderator names the core contradiction, draws an ASCII framework chart, and 
 /paper-signal          # or invoke the paper-signal skill
 ```
 
+See [`examples/sample-daily-note.md`](examples/sample-daily-note.md) for a real note the
+round-table produced (2 papers deep-analyzed by the 4-persona panel, 1 triaged).
+
 ## Codex Automations
 
 Use `codex/automation_prompt.md` as the prompt for a standalone project automation. Codex scheduling is user-local: the machine must be powered on, Codex must be running, and this project must be available on disk when the automation runs.

@@ -67,8 +67,8 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         steps = [f"Edit your research domains/keywords in {result.config_path}"]
         if not vault:
             steps.append('Set your vault: export OBSIDIAN_VAULT_PATH="/path/to/vault"')
-        steps.append("Verify setup:   paper-signal doctor")
-        steps.append("First run:      paper-signal run   (writes today's note)")
+        steps.append("Verify setup:   the `doctor` command")
+        steps.append("First run:      the `run` command   (writes today's note)")
         print("\nNext steps:")
         for number, step in enumerate(steps, start=1):
             print(f"  {number}. {step}")
@@ -82,9 +82,11 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
             print(f"{icon} {check.name}: {check.detail}")
             if check.fix and check.status != "ok":
                 print(f"    → {check.fix}")
-        print("\nAll good." if all_ok else "\nSome checks failed — see fixes above.")
         if not all_ok:
+            print("\nSome checks failed — see fixes above.")
             raise SystemExit(1)
+        has_warnings = any(check.status == "warn" for check in checks)
+        print("\nAll good (with warnings)." if has_warnings else "\nAll good.")
         return
 
     if args.command == "init-vault":

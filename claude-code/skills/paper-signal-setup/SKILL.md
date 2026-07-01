@@ -113,11 +113,21 @@ up later if they'd like. Do not set up cron/launchd unless they ask.
 - Biology → `q-bio.*`: neuroscience `q-bio.NC`, genomics & gene editing `q-bio.GN`, proteins &
   molecular structure (AlphaFold-style) `q-bio.BM`, quantitative methods `q-bio.QM`, molecular
   networks `q-bio.MN`, cell behavior `q-bio.CB`
-- Physics / math / economics → `physics.*`, `math.*`, `econ.*`
+- Economics / econometrics → `econ.EM` (econometrics), `econ.TH` (theory), `econ.GN` (general);
+  causal inference often lives in `stat.ME`
+- Finance / quant / markets → `q-fin.*`: trading & microstructure `q-fin.TR`, mathematical
+  finance `q-fin.MF`, portfolio `q-fin.PM`, risk `q-fin.RM`, computational `q-fin.CP`
+- Game theory / mechanism design / auctions → `cs.GT`, `econ.TH`
+- Statistics / causal inference → `stat.ME` (methodology), `stat.AP` (applied), `stat.ML`
+- Climate / earth science → `physics.ao-ph` (atmospheric & oceanic), `physics.geo-ph`
+  (geophysics); attribution/impact methods often `stat.AP`
+- Other physics / math → `physics.*`, `math.*`
 
 If a topic isn't listed, pick the closest code or ask the user to clarify the field. For a
 cross-cutting theme with no home category (e.g. "evaluation", "benchmarks"), model it as
-**keywords** across `cs.CL`/`cs.AI`/`cs.LG` rather than a category.
+**keywords** across the relevant categories rather than a category of its own. Papers are often
+cross-posted, so listing 2–3 categories per domain (not one) catches more of the real work —
+e.g. market microstructure lives under `q-fin.TR` far more than `econ.*`.
 
 ## Config shape (you fill this in; the user never sees it)
 

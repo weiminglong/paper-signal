@@ -3,6 +3,7 @@ from __future__ import annotations
 import pytest
 
 from paper_signal.cli import main
+from paper_signal.onboarding import init_project
 
 
 def test_doctor_missing_config_exits_nonzero(tmp_path, monkeypatch):
@@ -21,6 +22,19 @@ def test_run_missing_config_is_friendly(tmp_path, monkeypatch, capsys):
     # Friendly message, not a raw traceback, and it points at `init`.
     assert "Config error" in err
     assert "paper-signal init" in err
+
+
+def test_doctor_distinguishes_warnings_from_all_good(tmp_path, monkeypatch, capsys):
+    # A not-yet-created vault is a warning, not a failure — the summary must say so,
+    # not print a bare "All good." next to a ⚠ line.
+    monkeypatch.delenv("OBSIDIAN_VAULT_PATH", raising=False)
+    config_path = tmp_path / "interests.yaml"
+    init_project(config_path=config_path, vault=None)
+    # Does not raise (all_ok is True), but warns.
+    main(["doctor", "--config", str(config_path), "--vault", str(tmp_path / "not-created"), "--offline"])
+    out = capsys.readouterr().out
+    assert "All good (with warnings)." in out
+    assert "does not exist yet" in out
 
 
 def test_init_numbers_steps_contiguously(tmp_path, monkeypatch, capsys):

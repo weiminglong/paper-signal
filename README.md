@@ -2,7 +2,7 @@
 
 A local-first research paper agent that turns new papers into daily Obsidian notes.
 
-PaperSignal fetches recent papers, scores them against your research interests, runs a small review panel over the shortlist, and writes a daily read into your Obsidian vault. It is designed to run as a normal CLI first, with optional scheduling through Codex Automations, Claude Code, cron, launchd, Windows Task Scheduler, or GitHub Actions.
+PaperSignal fetches recent papers, scores them against your research interests, and writes a daily read into your Obsidian vault. It runs two ways: a fast deterministic CLI, or a Claude Code **round-table** in which a Moderator and persona subagents debate each top paper and author the note. It is designed to run as a normal CLI first, with optional scheduling through Codex Automations, Claude Code, cron, launchd, Windows Task Scheduler, or GitHub Actions.
 
 ## Status
 
@@ -11,7 +11,8 @@ Early scaffold. The current implementation includes:
 - arXiv search
 - YAML-based research interests
 - deterministic paper scoring
-- lightweight agent-panel synthesis
+- a deterministic quick-scan panel (`paper-signal run`)
+- a Claude Code multi-agent round-table that authors deep daily notes (`paper-signal fetch` + skill)
 - Obsidian daily note rendering
 - local state for previously seen papers
 - Codex and Claude Code integration prompts
@@ -69,10 +70,33 @@ Runtime state is stored under:
 ## Commands
 
 ```bash
-paper-signal run --config config/interests.yaml
-paper-signal run --config config/interests.yaml --dry-run
+paper-signal run --config config/interests.yaml            # deterministic quick scan, writes the note
+paper-signal run --config config/interests.yaml --dry-run  # render without writing
+paper-signal fetch --config config/interests.yaml          # emit JSON candidates for the round-table (no writes)
+paper-signal commit --ids 2601.00001,2601.00002            # mark papers seen after an agent writes the note
 paper-signal init-vault --vault "$OBSIDIAN_VAULT_PATH"
 ```
+
+## Round-Table (Claude Code multi-agent analysis)
+
+For deep analysis, Claude Code is the LLM brain — no separate API key. The CLI fetches and
+scores; Claude Code runs a round-table over the top papers and writes the note.
+
+The framework (adapted from Li Jigang's `圆桌讨论` / "Roundtable Seminar") seats a
+**Moderator** and a panel of **persona subagents** — Methodologist (INTJ), Empiricist
+(ISTJ), Skeptic (ENTP), Practitioner (ESTP), Theorist (INTP), Connector (ENFP). For each
+top paper (`daily.deep_analysis_count`), the personas argue across two dialectical rounds;
+the Moderator names the core contradiction, draws an ASCII framework chart, and issues a
+`deep-read / skim / queue / skip` verdict with knowledge-network links. See
+`claude-code/skills/paper-signal/SKILL.md` and `prompts/`.
+
+```bash
+# In Claude Code:
+/paper-signal          # or invoke the paper-signal skill
+```
+
+See [`examples/sample-daily-note.md`](examples/sample-daily-note.md) for a real note the
+round-table produced (2 papers deep-analyzed by the 4-persona panel, 1 triaged).
 
 ## Codex Automations
 
@@ -85,7 +109,8 @@ This repo includes two Claude Code entry points:
 - `.claude/commands/paper-signal.md` for a project slash command.
 - `claude-code/skills/paper-signal/SKILL.md` for installing as a reusable skill.
 
-Both call the same CLI instead of duplicating logic.
+Both drive the round-table workflow (`paper-signal fetch` → multi-agent analysis → note),
+and fall back to the deterministic `paper-signal run` for a quick scan.
 
 ## Inspiration
 

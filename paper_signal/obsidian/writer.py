@@ -26,6 +26,11 @@ def init_vault(vault_path: str | Path) -> None:
         (vault / relative).mkdir(parents=True, exist_ok=True)
 
 
+def daily_note_path(vault_path: str | Path, run_date: date) -> Path:
+    """Canonical location of the dated daily note inside the vault."""
+    return Path(vault_path) / "10_Daily" / f"{run_date.isoformat()}-paper-recommendations.md"
+
+
 def write_daily_note(
     vault_path: str | Path,
     config: AppConfig,
@@ -35,7 +40,7 @@ def write_daily_note(
 ) -> WriteResult:
     vault = Path(vault_path)
     init_vault(vault)
-    note_path = vault / "10_Daily" / f"{run_date.isoformat()}-paper-recommendations.md"
+    note_path = daily_note_path(vault, run_date)
     body = render_daily_note(config=config, scored_papers=scored_papers, run_date=run_date)
     if not dry_run:
         note_path.write_text(body, encoding="utf-8")

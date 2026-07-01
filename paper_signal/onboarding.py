@@ -6,6 +6,8 @@ import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
+import yaml
+
 from paper_signal.config import load_config
 from paper_signal.obsidian.writer import init_vault
 from paper_signal.sources.arxiv import ARXIV_API_URL
@@ -77,17 +79,26 @@ def init_project(
     """Scaffold a config (and vault folders) so a first run works. Idempotent."""
     config_path = Path(config_path)
     result = InitResult(config_path=config_path)
+    pre_existed = config_path.exists()
 
-    if config_path.exists() and not force:
+    if pre_existed and not force:
         result.notes.append(f"Config already exists at {config_path} (use --force to overwrite).")
     else:
         content = DEFAULT_INTERESTS_YAML
         if vault:
-            content = content.replace('vault_path: ""', f'vault_path: "{vault}"')
+            # Serialize with yaml so paths containing quotes/backslashes/colons/unicode
+            # (e.g. a Windows path or a vault named My "Cool" Vault) stay valid YAML.
+            vault_line = yaml.safe_dump(
+                {"vault_path": str(vault)},
+                default_flow_style=False,
+                allow_unicode=True,
+                width=1_000_000,
+            ).strip()
+            content = content.replace('vault_path: ""', vault_line)
         config_path.parent.mkdir(parents=True, exist_ok=True)
         config_path.write_text(content, encoding="utf-8")
         result.created_config = True
-        verb = "Overwrote" if force and config_path.exists() else "Wrote"
+        verb = "Overwrote" if pre_existed else "Wrote"
         result.notes.append(f"{verb} config to {config_path}.")
 
     if vault:

@@ -37,14 +37,24 @@ and `paper-signal doctor` tells you exactly what, if anything, is misconfigured.
 ### Zero-install (no clone)
 
 Run it straight from GitHub with [uv](https://docs.astral.sh/uv/) or
-[pipx](https://pipx.pypa.io/) — no clone, no manual venv:
+[pipx](https://pipx.pypa.io/) — no clone, no manual venv. Run `init` first (it writes
+`config/interests.yaml` into the current directory), then run from that same directory:
 
 ```bash
+export OBSIDIAN_VAULT_PATH="/path/to/your/Obsidian Vault"
+
+# uv (ephemeral):
+uvx --from git+https://github.com/weiminglong/paper-signal paper-signal init
+$EDITOR config/interests.yaml     # tune your domains/keywords
 uvx --from git+https://github.com/weiminglong/paper-signal paper-signal run
-# or
+
+# or pipx (persistent install):
 pipx install git+https://github.com/weiminglong/paper-signal
-paper-signal run
+paper-signal init && $EDITOR config/interests.yaml && paper-signal run
 ```
+
+`init` and `run` must share a working directory — `init` writes the config there and
+`run` reads it back (relative `config/interests.yaml`).
 
 The daily note is written to:
 

@@ -5,6 +5,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 HOUR="${1:-7}"
+if ! [[ "$HOUR" =~ ^([0-9]|1[0-9]|2[0-3])$ ]]; then
+  echo "HOUR must be an integer 0-23 (got: '$HOUR')" >&2
+  exit 1
+fi
 PLIST="$HOME/Library/LaunchAgents/com.papersignal.daily.plist"
 RUNNER="${ROOT_DIR}/scripts/run-daily.sh"
 
@@ -41,6 +45,14 @@ cat > "$PLIST" <<EOF
 EOF
 
 launchctl unload "$PLIST" 2>/dev/null || true
+if command -v plutil >/dev/null 2>&1; then
+  plutil -lint "$PLIST" >/dev/null
+fi
 launchctl load "$PLIST"
+# launchctl load exits 0 even when it rejects the plist, so confirm the job registered.
+if ! launchctl list 2>/dev/null | grep -q "com.papersignal.daily"; then
+  echo "launchctl did not register the job; inspect $PLIST" >&2
+  exit 1
+fi
 echo "Installed launchd job at ${HOUR}:00 -> $PLIST"
 echo "Reminder: set OBSIDIAN_VAULT_PATH in ${ROOT_DIR}/.env (launchd does not inherit your shell env)."

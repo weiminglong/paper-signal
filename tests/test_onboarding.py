@@ -62,6 +62,45 @@ def test_doctor_ok_with_valid_setup(tmp_path):
     assert statuses["vault"] == "ok"
 
 
+def test_init_force_new_reports_wrote(tmp_path):
+    # --force on a path with no existing config should say "Wrote", not "Overwrote".
+    config_path = tmp_path / "interests.yaml"
+    result = init_project(config_path=config_path, vault=None, force=True)
+    assert result.created_config is True
+    assert any("Wrote config" in note for note in result.notes)
+    assert not any("Overwrote" in note for note in result.notes)
+
+
+def test_init_handles_special_char_vault_paths(tmp_path):
+    # Real, creatable dirs whose names contain the exact chars that broke raw YAML
+    # interpolation: a double-quote, and a backslash followed by U (a YAML \U escape).
+    for name in ['My "Cool" Vault', r"C\Users Vault"]:
+        vault = tmp_path / name
+        config_path = tmp_path / "interests.yaml"
+        init_project(config_path=config_path, vault=str(vault), force=True)
+        # The written config must parse and preserve the exact vault path.
+        assert load_config(config_path).vault_path == str(vault)
+
+
+def test_doctor_state_check_ok_and_warn(tmp_path):
+    config_path = tmp_path / "interests.yaml"
+    vault = tmp_path / "vault"
+    init_project(config_path=config_path, vault=str(vault))
+    state_file = vault / "99_System" / "PaperSignal" / "state.json"
+
+    state_file.write_text('{"seen_paper_ids": ["a", "b"]}', encoding="utf-8")
+    ok, checks = doctor(config_path=config_path, vault=str(vault), offline=True)
+    statuses = _statuses(checks)
+    assert statuses["state"] == "ok"
+    assert ok is True
+
+    # A corrupt state file is a warning, not a hard failure (dedup can be reset).
+    state_file.write_text("not json{", encoding="utf-8")
+    ok2, checks2 = doctor(config_path=config_path, vault=str(vault), offline=True)
+    assert _statuses(checks2)["state"] == "warn"
+    assert ok2 is True
+
+
 def test_doctor_warns_on_empty_keywords(tmp_path):
     config_path = tmp_path / "interests.yaml"
     config_path.write_text(

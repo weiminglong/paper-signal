@@ -7,6 +7,7 @@ import sys
 from pathlib import Path
 
 from paper_signal import __version__
+from paper_signal.config import ConfigError
 from paper_signal.obsidian.writer import init_vault
 from paper_signal.onboarding import doctor, init_project
 from paper_signal.pipeline import commit_seen, fetch_candidates, fetch_payload, run_pipeline
@@ -17,7 +18,18 @@ _STATUS_ICON = {"ok": "✓", "warn": "⚠", "fail": "✗"}
 def main(argv: list[str] | None = None) -> None:
     parser = build_parser()
     args = parser.parse_args(argv)
+    try:
+        _dispatch(args, parser)
+    except ConfigError as exc:
+        print(f"Config error: {exc}", file=sys.stderr)
+        print(
+            "Run `paper-signal init` to create a starter config, or pass --config <path>.",
+            file=sys.stderr,
+        )
+        raise SystemExit(1) from exc
 
+
+def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None:
     if args.command == "run":
         result = run_pipeline(
             config_path=args.config,
@@ -52,12 +64,14 @@ def main(argv: list[str] | None = None) -> None:
         result = init_project(config_path=args.config, vault=vault, force=args.force)
         for note in result.notes:
             print(note)
-        print("\nNext steps:")
-        print("  1. Edit your research domains/keywords in", result.config_path)
+        steps = [f"Edit your research domains/keywords in {result.config_path}"]
         if not vault:
-            print("  2. Set your vault: export OBSIDIAN_VAULT_PATH=\"/path/to/vault\"")
-        print("  3. Verify setup:   paper-signal doctor")
-        print("  4. First run:      paper-signal run --dry-run")
+            steps.append('Set your vault: export OBSIDIAN_VAULT_PATH="/path/to/vault"')
+        steps.append("Verify setup:   paper-signal doctor")
+        steps.append("First run:      paper-signal run --dry-run")
+        print("\nNext steps:")
+        for number, step in enumerate(steps, start=1):
+            print(f"  {number}. {step}")
         return
 
     if args.command == "doctor":

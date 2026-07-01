@@ -12,6 +12,9 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# Run from the repo root so any relative PAPER_SIGNAL_CONFIG resolves correctly
+# regardless of the scheduler's working directory (cron runs with CWD=$HOME).
+cd "${ROOT_DIR}"
 
 # Load project env if present.
 if [[ -f "${ROOT_DIR}/.env" ]]; then

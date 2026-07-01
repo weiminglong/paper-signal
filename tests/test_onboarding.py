@@ -1,7 +1,14 @@
 from __future__ import annotations
 
+import os
+
+import pytest
+
 from paper_signal.config import load_config
 from paper_signal.onboarding import doctor, init_project
+
+_WINDOWS_PATH = r"C:\Users\me\Obsidian Vault"
+skip_on_windows = pytest.mark.skipif(os.name == "nt", reason="drive-letter paths are valid on Windows")
 
 
 def _statuses(checks):
@@ -80,6 +87,32 @@ def test_init_handles_special_char_vault_paths(tmp_path):
         init_project(config_path=config_path, vault=str(vault), force=True)
         # The written config must parse and preserve the exact vault path.
         assert load_config(config_path).vault_path == str(vault)
+
+
+@skip_on_windows
+def test_init_ignores_wrong_os_vault(tmp_path, monkeypatch):
+    # A Windows path on macOS/Linux must NOT be scaffolded (that created junk folders before).
+    monkeypatch.delenv("OBSIDIAN_VAULT_PATH", raising=False)
+    config_path = tmp_path / "interests.yaml"
+    result = init_project(config_path=config_path, vault=_WINDOWS_PATH, force=True)
+
+    assert result.created_config is True       # config is still written
+    assert result.scaffolded is False          # but no folders created
+    assert result.vault is None
+    assert any("Windows path" in note for note in result.notes)
+    # The bogus path is not baked into the config either.
+    assert load_config(config_path).vault_path == ""
+    # And no junk directory was created for it.
+    assert not (tmp_path / _WINDOWS_PATH).exists()
+
+
+@skip_on_windows
+def test_doctor_fails_on_wrong_os_vault(tmp_path):
+    config_path = tmp_path / "interests.yaml"
+    init_project(config_path=config_path, vault=None)
+    ok, checks = doctor(config_path=config_path, vault=_WINDOWS_PATH, offline=True)
+    assert ok is False
+    assert _statuses(checks)["vault"] == "fail"
 
 
 def test_doctor_state_check_ok_and_warn(tmp_path):

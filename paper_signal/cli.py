@@ -68,7 +68,7 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         if not vault:
             steps.append('Set your vault: export OBSIDIAN_VAULT_PATH="/path/to/vault"')
         steps.append("Verify setup:   paper-signal doctor")
-        steps.append("First run:      paper-signal run --dry-run")
+        steps.append("First run:      paper-signal run   (writes today's note)")
         print("\nNext steps:")
         for number, step in enumerate(steps, start=1):
             print(f"  {number}. {step}")

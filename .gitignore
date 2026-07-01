@@ -12,5 +12,9 @@ build/
 config/interests.yaml
 data/
 state/
-vault/
 *.log
+
+# Obsidian vaults are best kept OUTSIDE the repo, but guard against ones kept inside:
+vault/
+*[Vv]ault/
+**/99_System/PaperSignal/

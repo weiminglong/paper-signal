@@ -24,11 +24,26 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-cp config/interests.example.yaml config/interests.yaml
 export OBSIDIAN_VAULT_PATH="/path/to/your/Obsidian Vault"
+paper-signal init        # scaffolds config/interests.yaml + vault folders
+paper-signal doctor      # checks config, vault, and arXiv reachability
+paper-signal run --dry-run
+paper-signal run
+```
 
-paper-signal run --config config/interests.yaml --dry-run
-paper-signal run --config config/interests.yaml
+`paper-signal init` writes a starter `config/interests.yaml` (edit the domains/keywords),
+and `paper-signal doctor` tells you exactly what, if anything, is misconfigured.
+
+### Zero-install (no clone)
+
+Run it straight from GitHub with [uv](https://docs.astral.sh/uv/) or
+[pipx](https://pipx.pypa.io/) — no clone, no manual venv:
+
+```bash
+uvx --from git+https://github.com/weiminglong/paper-signal paper-signal run
+# or
+pipx install git+https://github.com/weiminglong/paper-signal
+paper-signal run
 ```
 
 The daily note is written to:
@@ -70,12 +85,17 @@ Runtime state is stored under:
 ## Commands
 
 ```bash
+paper-signal init                                          # scaffold config + vault folders
+paper-signal doctor                                        # verify config, vault, arXiv reachability
 paper-signal run --config config/interests.yaml            # deterministic quick scan, writes the note
 paper-signal run --config config/interests.yaml --dry-run  # render without writing
 paper-signal fetch --config config/interests.yaml          # emit JSON candidates for the round-table (no writes)
 paper-signal commit --ids 2601.00001,2601.00002            # mark papers seen after an agent writes the note
 paper-signal init-vault --vault "$OBSIDIAN_VAULT_PATH"
 ```
+
+Most commands default `--config` to `config/interests.yaml` (or `$PAPER_SIGNAL_CONFIG`)
+and `--vault` to `$OBSIDIAN_VAULT_PATH`, so after `init` you can just run `paper-signal run`.
 
 ## Round-Table (Claude Code multi-agent analysis)
 

@@ -8,7 +8,10 @@ from pathlib import Path
 
 from paper_signal import __version__
 from paper_signal.obsidian.writer import init_vault
+from paper_signal.onboarding import doctor, init_project
 from paper_signal.pipeline import commit_seen, fetch_candidates, fetch_payload, run_pipeline
+
+_STATUS_ICON = {"ok": "✓", "warn": "⚠", "fail": "✗"}
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -42,6 +45,32 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit("No paper ids to commit (use --ids or --from-fetch)")
         total = commit_seen(Path(vault), ids)
         print(f"Marked {len(ids)} paper(s) as seen; {total} total in state")
+        return
+
+    if args.command == "init":
+        vault = args.vault or os.environ.get("OBSIDIAN_VAULT_PATH")
+        result = init_project(config_path=args.config, vault=vault, force=args.force)
+        for note in result.notes:
+            print(note)
+        print("\nNext steps:")
+        print("  1. Edit your research domains/keywords in", result.config_path)
+        if not vault:
+            print("  2. Set your vault: export OBSIDIAN_VAULT_PATH=\"/path/to/vault\"")
+        print("  3. Verify setup:   paper-signal doctor")
+        print("  4. First run:      paper-signal run --dry-run")
+        return
+
+    if args.command == "doctor":
+        vault = args.vault or os.environ.get("OBSIDIAN_VAULT_PATH")
+        all_ok, checks = doctor(config_path=args.config, vault=vault, offline=args.offline)
+        for check in checks:
+            icon = _STATUS_ICON.get(check.status, "?")
+            print(f"{icon} {check.name}: {check.detail}")
+            if check.fix and check.status != "ok":
+                print(f"    → {check.fix}")
+        print("\nAll good." if all_ok else "\nSome checks failed — see fixes above.")
+        if not all_ok:
+            raise SystemExit(1)
         return
 
     if args.command == "init-vault":
@@ -125,7 +154,29 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to a saved 'fetch' JSON (or '-' for stdin); marks every paper in it seen",
     )
 
-    init = subparsers.add_parser("init-vault", help="Create required Obsidian directories")
+    init = subparsers.add_parser("init", help="Scaffold config + vault for a first run")
+    init.add_argument(
+        "--config",
+        default=os.environ.get("PAPER_SIGNAL_CONFIG", "config/interests.yaml"),
+        help="Where to write the interests config",
+    )
     init.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT_PATH"))
+    init.add_argument("--force", action="store_true", help="Overwrite an existing config")
+
+    doctor_parser = subparsers.add_parser("doctor", help="Check that the setup is ready to run")
+    doctor_parser.add_argument(
+        "--config",
+        default=os.environ.get("PAPER_SIGNAL_CONFIG", "config/interests.yaml"),
+        help="Path to interests YAML config",
+    )
+    doctor_parser.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT_PATH"))
+    doctor_parser.add_argument(
+        "--offline", action="store_true", help="Skip the arXiv reachability check"
+    )
+
+    init_vault_parser = subparsers.add_parser(
+        "init-vault", help="Create required Obsidian directories"
+    )
+    init_vault_parser.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT_PATH"))
 
     return parser

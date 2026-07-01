@@ -1,8 +1,15 @@
 #!/usr/bin/env bash
+# Install a macOS launchd job that runs PaperSignal daily via scripts/run-daily.sh.
+# Usage: scripts/install_launchd.sh [HOUR]   (default hour: 7)
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+HOUR="${1:-7}"
 PLIST="$HOME/Library/LaunchAgents/com.papersignal.daily.plist"
+RUNNER="${ROOT_DIR}/scripts/run-daily.sh"
+
+chmod +x "${RUNNER}"
+mkdir -p "${ROOT_DIR}/data" "$HOME/Library/LaunchAgents"
 
 cat > "$PLIST" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
@@ -13,17 +20,15 @@ cat > "$PLIST" <<EOF
   <string>com.papersignal.daily</string>
   <key>ProgramArguments</key>
   <array>
-    <string>${ROOT_DIR}/.venv/bin/paper-signal</string>
-    <string>run</string>
-    <string>--config</string>
-    <string>${ROOT_DIR}/config/interests.yaml</string>
+    <string>/bin/bash</string>
+    <string>${RUNNER}</string>
   </array>
   <key>WorkingDirectory</key>
   <string>${ROOT_DIR}</string>
   <key>StartCalendarInterval</key>
   <dict>
     <key>Hour</key>
-    <integer>7</integer>
+    <integer>${HOUR}</integer>
     <key>Minute</key>
     <integer>0</integer>
   </dict>
@@ -37,4 +42,5 @@ EOF
 
 launchctl unload "$PLIST" 2>/dev/null || true
 launchctl load "$PLIST"
-echo "Installed launchd job: $PLIST"
+echo "Installed launchd job at ${HOUR}:00 -> $PLIST"
+echo "Reminder: set OBSIDIAN_VAULT_PATH in ${ROOT_DIR}/.env (launchd does not inherit your shell env)."

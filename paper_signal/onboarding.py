@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass, field
@@ -12,6 +13,12 @@ from paper_signal.config import load_config
 from paper_signal.obsidian.writer import init_vault
 from paper_signal.sources.arxiv import ARXIV_API_URL
 from paper_signal.state import PaperSignalState
+
+
+def _wrong_os_vault(path: str) -> bool:
+    """A Windows drive-letter path (C:\\... or C:/...) on a non-Windows system is almost
+    always a typo. Scaffolding it would silently create a junk folder, so flag it."""
+    return os.name != "nt" and re.match(r"^[A-Za-z]:[\\/]", path) is not None
 
 DEFAULT_INTERESTS_YAML = """\
 # PaperSignal interests. Edit the domains/keywords below to match your research.
@@ -80,14 +87,16 @@ def init_project(
     config_path = Path(config_path)
     result = InitResult(config_path=config_path)
     pre_existed = config_path.exists()
+    wrong_os = bool(vault) and _wrong_os_vault(str(vault))
+    usable_vault = bool(vault) and not wrong_os
 
     if pre_existed and not force:
         result.notes.append(f"Config already exists at {config_path} (use --force to overwrite).")
     else:
         content = DEFAULT_INTERESTS_YAML
-        if vault:
+        if usable_vault:
             # Serialize with yaml so paths containing quotes/backslashes/colons/unicode
-            # (e.g. a Windows path or a vault named My "Cool" Vault) stay valid YAML.
+            # (e.g. a vault named My "Cool" Vault) stay valid YAML.
             vault_line = yaml.safe_dump(
                 {"vault_path": str(vault)},
                 default_flow_style=False,
@@ -101,7 +110,12 @@ def init_project(
         verb = "Overwrote" if pre_existed else "Wrote"
         result.notes.append(f"{verb} config to {config_path}.")
 
-    if vault:
+    if wrong_os:
+        result.notes.append(
+            f"Vault path '{vault}' looks like a Windows path on a non-Windows system — "
+            "ignored (no folders created). Use a path like /Users/you/Obsidian/Vault."
+        )
+    elif usable_vault:
         init_vault(vault)
         result.vault = str(vault)
         result.scaffolded = True
@@ -178,6 +192,15 @@ def doctor(
                 "fail",
                 "No vault path resolved.",
                 "Set OBSIDIAN_VAULT_PATH, add vault_path to the config, or pass --vault.",
+            )
+        )
+    elif _wrong_os_vault(resolved_vault):
+        checks.append(
+            Check(
+                "vault",
+                "fail",
+                f"Vault path looks like a Windows path on this non-Windows system: {resolved_vault}.",
+                "Use a path like /Users/you/Obsidian/Vault.",
             )
         )
     else:

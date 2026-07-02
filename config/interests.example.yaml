@@ -1,7 +1,10 @@
+# Report language for Claude Code round-table notes ("en", "zh", ...).
+# The deterministic quick-scan template stays English.
 language: "en"
 vault_path: ""
 
 daily:
+  # Fetch budget, split across categories (100 over 4 categories = ~25 newest each).
   candidate_limit: 100
   recommendation_count: 10
   deep_analysis_count: 3
@@ -10,6 +13,7 @@ daily:
 sources:
   arxiv:
     enabled: true
+    keyword_search: true   # also search arXiv by keywords (helps thin-coverage fields)
     categories:
       - "cs.AI"
       - "cs.CL"

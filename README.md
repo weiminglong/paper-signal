@@ -118,9 +118,12 @@ Runtime state is stored under:
 paper-signal init                                          # scaffold config + vault folders
 paper-signal doctor                                        # verify config, vault, arXiv reachability
 paper-signal run --config config/interests.yaml            # deterministic quick scan, writes the note
+paper-signal run ... --no-mark-seen                        # tuning mode: don't mark papers seen
 paper-signal run --config config/interests.yaml --dry-run  # render without writing
 paper-signal fetch --config config/interests.yaml          # emit JSON candidates for the round-table (no writes)
 paper-signal commit --ids 2601.00001,2601.00002            # mark papers seen after an agent writes the note
+paper-signal unsee --last-run                              # forget the last run's papers (or --all / --ids)
+paper-signal history --days 7                              # what was recommended recently
 paper-signal init-vault --vault "$OBSIDIAN_VAULT_PATH"
 ```
 

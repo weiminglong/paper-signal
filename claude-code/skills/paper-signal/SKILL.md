@@ -50,11 +50,21 @@ paper-signal fetch --config config/interests.yaml --vault "$OBSIDIAN_VAULT_PATH"
 Parse the JSON. Key fields: `papers[]` (each with `rank`, `deep`, `title`, `abstract`,
 `authors`, `categories`, `score`, `matched_domains`, `matched_keywords`, `arxiv_url`,
 `pdf_url`, `paper_id`), `daily_note_path`, `papers_dir`, `domains`, `deep_analysis_count`,
-`run_date`. The CLI has already created the vault folders and filtered out previously seen
-papers; it did **not** write anything.
+`run_date`, and `language`. The CLI has already created the vault folders and filtered out
+previously seen papers; it did **not** write anything.
 
-If `papers` is empty: write a short daily note at `daily_note_path` saying no new matching
-papers were found today, then stop (nothing to commit).
+**Language:** author the daily note and per-paper notes in the payload's `language` (e.g.
+`zh` → write the prose in Chinese). Keep paper titles, author names, `[[wikilinks]]`, and
+technical terms in their original form; translate your analysis, verdicts, and synthesis.
+`en` (the default) means English.
+
+If `papers` is empty: if a non-empty note already exists at `daily_note_path`, leave it
+alone and report that; otherwise write a short daily note saying no new matching papers
+were found today. Then stop (nothing to commit).
+
+If a non-empty note already exists at `daily_note_path` (e.g. a quick scan ran earlier
+today), do not blindly overwrite it — fold its papers into your analysis or confirm with
+the user before replacing it.
 
 ### 2. Round-table each deep paper
 

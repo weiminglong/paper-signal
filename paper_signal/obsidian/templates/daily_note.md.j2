@@ -31,13 +31,13 @@ No matching papers were found for today's configuration.
 
 **Why selected**: {{ item.reasons | join("; ") if item.reasons else "--" }}
 
-**Agent Panel**
+**Quick Signals** *(keyword heuristics — not AI analysis; use the round-table mode for that)*
 
 - **Relevance**: {{ item.panel.relevance_agent }}
 - **Method**: {{ item.panel.method_agent }}
-- **Skeptic**: {{ item.panel.skeptic_agent }}
-- **Knowledge Base**: {{ item.panel.knowledge_base_agent }}
-- **Moderator**: {{ item.panel.moderator }}
+- **Caution**: {{ item.panel.skeptic_agent }}
+- **Linking**: {{ item.panel.knowledge_base_agent }}
+- **Priority**: {{ item.panel.moderator }}
 
 **Abstract**: {{ item.paper.abstract }}
 

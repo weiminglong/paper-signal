@@ -24,15 +24,20 @@ if [[ -f "${ROOT_DIR}/.env" ]]; then
   set +a
 fi
 
-# Resolve the paper-signal executable: explicit override, project venv, then PATH.
+# Resolve how to invoke the CLI: explicit override, project venv, PATH, then the
+# no-install module form (`python3 -m paper_signal`) that the onboarding skill uses.
 if [[ -n "${PAPER_SIGNAL_BIN:-}" && -x "${PAPER_SIGNAL_BIN}" ]]; then
-  BIN="${PAPER_SIGNAL_BIN}"
+  CMD=("${PAPER_SIGNAL_BIN}")
 elif [[ -x "${ROOT_DIR}/.venv/bin/paper-signal" ]]; then
-  BIN="${ROOT_DIR}/.venv/bin/paper-signal"
+  CMD=("${ROOT_DIR}/.venv/bin/paper-signal")
 elif command -v paper-signal >/dev/null 2>&1; then
-  BIN="$(command -v paper-signal)"
+  CMD=("$(command -v paper-signal)")
+elif command -v python3 >/dev/null 2>&1 && python3 -c 'import yaml, jinja2' >/dev/null 2>&1; then
+  # Module form works only if the package's deps (pyyaml, jinja2) are importable.
+  CMD=(python3 -m paper_signal)
 else
-  echo "paper-signal not found. Install it (pip install -e .) or set PAPER_SIGNAL_BIN in .env." >&2
+  echo "paper-signal not runnable: install it (pip install -e .), or install its deps" >&2
+  echo "(python3 -m pip install pyyaml jinja2), or set PAPER_SIGNAL_BIN in .env." >&2
   exit 1
 fi
 
@@ -41,8 +46,8 @@ mkdir -p "${ROOT_DIR}/data"
 
 echo "[$(date)] paper-signal run (config=${CONFIG})"
 if [[ -n "${OBSIDIAN_VAULT_PATH:-}" ]]; then
-  exec "${BIN}" run --config "${CONFIG}" --vault "${OBSIDIAN_VAULT_PATH}"
+  exec "${CMD[@]}" run --config "${CONFIG}" --vault "${OBSIDIAN_VAULT_PATH}"
 else
   # Falls back to vault_path inside the config file.
-  exec "${BIN}" run --config "${CONFIG}"
+  exec "${CMD[@]}" run --config "${CONFIG}"
 fi

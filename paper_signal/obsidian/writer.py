@@ -14,6 +14,8 @@ from paper_signal.models import AppConfig, ScoredPaper
 class WriteResult:
     daily_note_path: Path
     wrote: bool
+    # True when an empty run was suppressed to protect an existing note for the day.
+    kept_existing: bool = False
 
 
 def init_vault(vault_path: str | Path) -> None:
@@ -41,6 +43,10 @@ def write_daily_note(
     vault = Path(vault_path)
     init_vault(vault)
     note_path = daily_note_path(vault, run_date)
+    # Guard: a re-run that matched nothing (e.g. everything already seen) must not
+    # replace a note the user already has for today with "No matching papers".
+    if not scored_papers and note_path.exists() and note_path.stat().st_size > 0:
+        return WriteResult(daily_note_path=note_path, wrote=False, kept_existing=True)
     body = render_daily_note(config=config, scored_papers=scored_papers, run_date=run_date)
     if not dry_run:
         note_path.write_text(body, encoding="utf-8")

@@ -33,6 +33,7 @@ def load_config(path: str | Path) -> AppConfig:
     sources = raw.get("sources") or {}
     arxiv = sources.get("arxiv") or {}
     arxiv_categories = list(arxiv.get("categories") or [])
+    arxiv_keyword_search = bool(arxiv.get("keyword_search", True))
 
     domains = _parse_domains(raw.get("research_domains") or {})
     if not domains:
@@ -54,6 +55,7 @@ def load_config(path: str | Path) -> AppConfig:
         arxiv_categories=arxiv_categories,
         research_domains=domains,
         excluded_keywords=list(raw.get("excluded_keywords") or []),
+        arxiv_keyword_search=arxiv_keyword_search,
     )
 
 

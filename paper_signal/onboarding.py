@@ -24,12 +24,16 @@ DEFAULT_INTERESTS_YAML = """\
 # PaperSignal interests. Edit the domains/keywords below to match your research.
 # Docs: https://github.com/weiminglong/paper-signal
 
+# Report language for the Claude Code round-table notes (e.g. "en", "zh").
+# The deterministic quick-scan note template is English regardless.
 language: "en"
 # Where to write daily notes. Leave "" to use the OBSIDIAN_VAULT_PATH env var instead.
 vault_path: ""
 
 daily:
-  candidate_limit: 100      # how many recent papers to pull from arXiv
+  # Fetch budget, SPLIT ACROSS categories (100 over 4 categories = ~25 newest each).
+  # Few or off-topic results? Raise this before touching keywords.
+  candidate_limit: 100
   recommendation_count: 10  # how many make it into the note
   deep_analysis_count: 3    # how many get the full round-table (Claude Code path)
   skip_seen: true           # don't re-recommend papers already seen
@@ -37,6 +41,8 @@ daily:
 sources:
   arxiv:
     enabled: true
+    # Also search arXiv by your keywords directly (helps fields without a category).
+    keyword_search: true
     categories:
       - "cs.AI"
       - "cs.CL"

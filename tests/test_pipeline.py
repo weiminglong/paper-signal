@@ -112,6 +112,7 @@ def test_fetch_candidates_is_read_only(tmp_path, monkeypatch):
         "search_arxiv",
         lambda categories, max_results: [_paper("2601.00001", "Agent paper")],
     )
+    monkeypatch.setattr(pipeline, "search_arxiv_by_keywords", lambda keywords, max_results: [])
 
     result = fetch_candidates(config_path=config_file, vault_path=str(vault))
 
@@ -140,6 +141,7 @@ def test_fetch_candidates_skips_seen(tmp_path, monkeypatch):
             _paper("2601.00002", "New agent paper"),
         ],
     )
+    monkeypatch.setattr(pipeline, "search_arxiv_by_keywords", lambda keywords, max_results: [])
 
     result = fetch_candidates(config_path=config_file, vault_path=str(vault))
 

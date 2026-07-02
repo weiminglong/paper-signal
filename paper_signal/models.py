@@ -28,6 +28,9 @@ class AppConfig:
     arxiv_categories: list[str]
     research_domains: list[ResearchDomain]
     excluded_keywords: list[str]
+    # Also query arXiv server-side with the domains' keywords (all: fields), so
+    # thin-coverage fields aren't limited to a small per-category recency window.
+    arxiv_keyword_search: bool = True
 
 
 @dataclass

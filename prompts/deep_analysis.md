@@ -41,4 +41,6 @@ date_analyzed: "<YYYY-MM-DD>"
 
 Use Obsidian markdown, valid YAML frontmatter, wikilinks with aliases
 (`[[note-name|Alias]]`), and `--` for genuinely missing data (never `---` inside the body).
-Cite paper sections only when you actually know them; otherwise say where to look.
+Write the prose in the configured report language; keep the title, authors, and wikilinks
+in their original form. Cite paper sections only when you actually know them; otherwise
+say where to look.

@@ -153,6 +153,10 @@ Verdict icons: 📖 deep-read · 👀 skim · 📥 queue · ⏭️ skip.
 </details>
 ```
 
+**Language:** write all prose (cards, synthesis, debate distillations, verdicts) in the
+configured report language (the fetch payload's `language` field). Keep paper titles,
+author names, `[[wikilinks]]`, and established technical terms in their original form.
+
 Readability rules for the card:
 - No unexplained acronyms or in-group jargon in the plain-English lines — expand or avoid
   them ("dense supervision" → "scoring an agent's individual steps"). Assume a smart reader

@@ -32,5 +32,6 @@ Produce, in this order:
   Connect only what genuinely connects; skip the map if it would be forced.
 
 Use Obsidian markdown, valid YAML frontmatter, `[[wikilinks]]` with aliases, and `--` for
-missing data. The whole top section should be readable in under a minute and leave the
-reader knowing exactly what to open first.
+missing data. Write the prose in the configured report language (`language` in the fetch
+payload); keep titles and wikilinks as-is. The whole top section should be readable in
+under a minute and leave the reader knowing exactly what to open first.

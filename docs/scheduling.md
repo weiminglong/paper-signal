@@ -18,8 +18,16 @@ OBSIDIAN_VAULT_PATH="/path/to/your/Obsidian Vault"
 # PAPER_SIGNAL_BIN="/path/to/paper-signal"               # optional override
 ```
 
-Make sure the CLI is installed (`pip install -e .` creates `.venv/bin/paper-signal`, or set
-`PAPER_SIGNAL_BIN`). Verify everything with `paper-signal doctor`.
+The runner finds the CLI automatically: `PAPER_SIGNAL_BIN` → `.venv/bin/paper-signal` →
+`paper-signal` on PATH → `python3 -m paper_signal` as a fallback. The module fallback
+requires the package's dependencies (`pyyaml`, `jinja2`) to be importable by `python3` —
+if setup never installed anything, run `python3 -m pip install pyyaml jinja2` once (or
+`pip install -e .`). Verify with `paper-signal doctor` (or `python3 -m paper_signal doctor`).
+
+Note: scheduled runs use the deterministic quick scan — the note's prose template is
+English and there is no AI round-table. For AI-authored (and translated) reports, run the
+`paper-signal` skill interactively in Claude Code, or schedule a Claude Code routine that
+invokes it.
 
 ## cron (Linux/macOS)
 

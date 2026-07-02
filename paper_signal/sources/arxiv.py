@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import urllib.error
 import urllib.parse
 import urllib.request
 import xml.etree.ElementTree as ET
@@ -11,6 +12,9 @@ from paper_signal.models import Paper
 
 ARXIV_API_URL = "https://export.arxiv.org/api/query"
 ATOM_NS = {"atom": "http://www.w3.org/2005/Atom"}
+# arXiv asks API clients to identify themselves and rate-limits anonymous bursts.
+USER_AGENT = "PaperSignal/0.2 (+https://github.com/weiminglong/paper-signal)"
+RETRY_DELAY_SECONDS = 5.0
 
 
 def search_arxiv(categories: list[str], max_results: int) -> list[Paper]:
@@ -35,6 +39,25 @@ def search_arxiv(categories: list[str], max_results: int) -> list[Paper]:
     )[:max_results]
 
 
+def search_arxiv_by_keywords(keywords: list[str], max_results: int) -> list[Paper]:
+    """Server-side keyword search (arXiv `all:` fields), OR-joined.
+
+    Complements the category-recency fetch: for thin-coverage fields (e.g. digital
+    humanities) the relevant papers are scattered across big categories, so asking
+    arXiv to match the user's own keywords finds work a small recency window misses.
+    """
+    # Strip embedded quotes (they would corrupt the query string) and quote every
+    # term unconditionally — valid for single words too, and neutralizes bare
+    # AND/OR/colon tokens inside a phrase.
+    cleaned = [" ".join(kw.replace('"', " ").split()) for kw in keywords]
+    cleaned = [kw for kw in cleaned if kw]
+    if not cleaned:
+        return []
+    sleep(0.5)  # politeness gap after the category queries
+    terms = [f'all:"{kw}"' for kw in cleaned]
+    return _search_arxiv_query(query=" OR ".join(terms), max_results=max_results)
+
+
 def _search_arxiv_query(query: str, max_results: int) -> list[Paper]:
     params = {
         "search_query": query,
@@ -44,8 +67,19 @@ def _search_arxiv_query(query: str, max_results: int) -> list[Paper]:
         "sortOrder": "descending",
     }
     url = f"{ARXIV_API_URL}?{urllib.parse.urlencode(params)}"
-    with urllib.request.urlopen(url, timeout=30) as response:
-        body = response.read()
+    request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
+    body = b""
+    for attempt in (1, 2):
+        try:
+            with urllib.request.urlopen(request, timeout=30) as response:
+                body = response.read()
+            break
+        except urllib.error.HTTPError as exc:
+            # Rate-limited or briefly unavailable: back off once, then give up.
+            if attempt == 1 and exc.code in (429, 503):
+                sleep(RETRY_DELAY_SECONDS)
+                continue
+            raise
     return parse_arxiv_feed(body)
 
 

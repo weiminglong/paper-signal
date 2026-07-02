@@ -53,6 +53,15 @@ Ask what fields/topics they follow. Give examples: "e.g. AI agents, robotics, ca
 climate models." Then ask for a few specific keywords they'd want to catch, and which matter
 most. Keep it conversational — 2 to 4 topics is plenty. Do **not** show them arXiv codes.
 
+Also ask which language they'd like their reports in. Set `language:` in the config to match.
+Be honest about what it controls: the AI round-table notes are written in that language, but
+the fast deterministic scan uses a fixed English template — so a non-English user who wants
+translated reports should use the round-table mode (and scheduled runs will be English).
+
+Keyword tips (the matcher is literal): matching is exact word-boundary, **no stemming** —
+"manuscript" does not match "manuscripts", so list plural/variant forms explicitly. Prefer
+specific phrases over single generic words ("working memory model", not "memory").
+
 ### 4. Confirm the vault
 Read the path back in plain English ("I'll save your notes in *<folder>* — sound right?"). Sanity-
 check it: reject an obviously wrong path (e.g. a Windows `C:\...` path on a Mac) and ask again.
@@ -76,25 +85,48 @@ Run `paper-signal doctor`. Fix any ✗/⚠ config or vault items and re-run. An 
 environmental (network/rate-limit) — reassure and move on, don't loop trying to "fix" it. Report
 "all set" in plain terms.
 
-### 7. First report (fast + free)
-Run the deterministic scan so they see something immediately:
-`paper-signal run --config config/interests.yaml --vault "<their vault>"`
+### 7. First report (fast + free) — tune in preview mode
+Run the deterministic scan **in preview mode** so tuning re-runs don't hide papers:
+`paper-signal run --config config/interests.yaml --vault "<their vault>" --no-mark-seen`
+
+Why: a normal `run` marks every shown paper as "seen" and skips it next time. During tuning
+that silently makes the user's best papers vanish between iterations. `--no-mark-seen` writes
+the note but keeps papers eligible, so you can iterate freely. (If you already did a normal
+run, `paper-signal unsee --last-run` re-allows those papers.)
+
 Summarize the note in plain English and tell them where it is in Obsidian
 (`10_Daily/<date>-paper-recommendations.md`). Then react to what you actually got:
-- **0 papers selected** → keywords are too narrow; add broader synonyms and re-run.
-- **Off-topic picks** (a broad word like "evaluation" or "model" pulled in noise) → tighten the
-  phrase or add an `excluded_keywords` entry, and re-run.
-Don't leave them with an empty or noisy first note.
+- **Few papers, or thin/niche field** → raise `daily.candidate_limit` first (it is **split
+  across categories**: 100 over 4 categories ≈ 25 newest each — a few hours of a busy
+  category). 300 is a fine tuning value. Keyword search (`sources.arxiv.keyword_search`,
+  on by default) also pulls matches from outside the listed categories.
+- **0 papers selected** → keywords too narrow; add broader synonyms **and plural/variant
+  forms** (matching is exact, no stemming) and re-run.
+- **Off-topic picks** (a broad word like "evaluation" or "model" pulled in noise) → tighten
+  the phrase or add an `excluded_keywords` entry, and re-run.
+Iterate until the note is genuinely useful — don't leave them with an empty or noisy one.
 
-### 8. Offer the deep version
-Explain there's a richer mode where AI agents debate each top paper and write a more insightful
-report — but note it uses more of their Claude usage. If they want it, run the **paper-signal**
-skill (the round-table). Otherwise leave it for later.
+### 8. Offer the deep version, then finalize
+Explain there's a richer mode where AI agents debate each top paper and write a more
+insightful report (in their chosen language) — but note it uses more of their Claude usage.
+
+- **If they want it**: run the **paper-signal** skill (the round-table) now. Because tuning
+  used `--no-mark-seen`, today's papers are still eligible — the round-table gets the full
+  candidate pool, not leftovers. Its `commit` step records the papers as seen.
+- **If not**: finalize with one normal run (no `--no-mark-seen`) so today's papers are
+  recorded and tomorrow brings fresh ones.
+
+Never run the quick scan in normal mode and *then* offer the deep version on the same day —
+the deep run would only see leftovers.
 
 ### 9. Hand off
 Tell them how to use it from now on, in one line: *"Whenever you want a fresh report, just tell
-me 'run my paper report'."* Mention scheduling exists (a daily automatic run) and offer to set it
-up later if they'd like. Do not set up cron/launchd unless they ask.
+me 'run my paper report'."* Useful ongoing commands you can run for them:
+- `paper-signal history --days 7` — "what did you find this week?"
+- `paper-signal unsee --last-run` — re-allow the last run's papers (e.g. after retuning).
+Mention scheduling exists (a daily automatic run; note the scheduled note is the English
+quick-scan) and offer to set it up later if they'd like. Do not set up cron/launchd unless
+they ask.
 
 ## arXiv category cheat-sheet (plain topic → code)
 
@@ -121,7 +153,13 @@ up later if they'd like. Do not set up cron/launchd unless they ask.
 - Statistics / causal inference → `stat.ME` (methodology), `stat.AP` (applied), `stat.ML`
 - Climate / earth science → `physics.ao-ph` (atmospheric & oceanic), `physics.geo-ph`
   (geophysics); attribution/impact methods often `stat.AP`
-- Other physics / math → `physics.*`, `math.*`
+- Materials science / batteries / solar cells → `cond-mat.mtrl-sci` (+ `cond-mat.soft`,
+  `cond-mat.supr-con` as fits); ML-for-materials also cross-posts to `cs.LG`
+- Digital humanities / historical documents / cultural heritage → `cs.CL` + `cs.CV` +
+  `cs.DL` (digital libraries) + `cs.CY`; HTR/OCR work often lands in `cs.CV` and `cs.DL`
+- Other physics / math → the specific `physics.*` / `math.*` subcategory — but check the
+  domain-specific archives first (`cond-mat.*`, `astro-ph.*`, `q-bio.*`, `q-fin.*`); many
+  fields do NOT live under `physics.*`
 
 If a topic isn't listed, pick the closest code or ask the user to clarify the field. For a
 cross-cutting theme with no home category (e.g. "evaluation", "benchmarks"), model it as

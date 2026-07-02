@@ -13,7 +13,10 @@ daily:
 sources:
   arxiv:
     enabled: true
-    keyword_search: true   # also search arXiv by keywords (helps thin-coverage fields)
+    # Also search arXiv by your keywords directly (helps thin-coverage fields).
+    # Uses only the top ~10 keywords by domain priority; spans ALL of arXiv, so
+    # keep keywords field-specific (generic terms pull in unrelated papers).
+    keyword_search: true
     categories:
       - "cs.AI"
       - "cs.CL"

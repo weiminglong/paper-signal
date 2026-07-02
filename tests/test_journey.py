@@ -7,11 +7,13 @@ import json
 from datetime import date, datetime, timezone
 from pathlib import Path
 
+import pytest
+
 from paper_signal import pipeline
 from paper_signal.models import AppConfig, DailySettings, Paper, ResearchDomain
 from paper_signal.obsidian.writer import write_daily_note
 from paper_signal.pipeline import commit_seen, recent_history, run_pipeline, unsee
-from paper_signal.state import PaperSignalState
+from paper_signal.state import PaperSignalState, StateError
 
 
 def _config(**overrides) -> AppConfig:
@@ -186,6 +188,87 @@ def test_empty_run_does_not_clobber_existing_note(tmp_path):
 
 
 # ---- pipeline: preview mode + keyword merge ----
+
+
+def test_run_does_not_clobber_roundtable_note(tmp_path):
+    """A non-empty quick-scan re-run must not replace a round-table or hand-written
+    note — only its own deterministic-scan output is fair game."""
+    vault = tmp_path / "vault"
+    config = _config()
+    scored = pipeline.add_panel_discussion(
+        [
+            pipeline.ScoredPaper(
+                paper=_paper("1"), score=5.0, matched_domains=["Agents"],
+                matched_keywords=["agent"], reasons=["r"],
+            )
+        ]
+    )
+    run_date = date(2026, 7, 2)
+    note_path = write_daily_note(
+        vault_path=vault, config=config, scored_papers=scored, run_date=run_date, dry_run=False
+    ).daily_note_path
+
+    # Simulate the round-table replacing today's note with its own authored version.
+    french_note = '---\ntags: ["daily-paper-read", "paper-signal", "claude-roundtable"]\n---\n\n# Lecture du jour\n'
+    note_path.write_text(french_note, encoding="utf-8")
+
+    result = write_daily_note(
+        vault_path=vault, config=config, scored_papers=scored, run_date=run_date, dry_run=False
+    )
+    assert result.kept_existing is True
+    assert result.kept_reason == "not-quick-scan"
+    assert note_path.read_text(encoding="utf-8") == french_note
+
+    # A hand-written note (no tags at all) is protected too.
+    note_path.write_text("# My own notes for today\n", encoding="utf-8")
+    result2 = write_daily_note(
+        vault_path=vault, config=config, scored_papers=scored, run_date=run_date, dry_run=False
+    )
+    assert result2.kept_reason == "not-quick-scan"
+
+    # force=True replaces; the new note is quick-scan-tagged and replaceable again.
+    forced = write_daily_note(
+        vault_path=vault, config=config, scored_papers=scored, run_date=run_date,
+        dry_run=False, force=True,
+    )
+    assert forced.wrote is True
+    assert "deterministic-scan" in note_path.read_text(encoding="utf-8")
+    again = write_daily_note(
+        vault_path=vault, config=config, scored_papers=scored, run_date=run_date, dry_run=False
+    )
+    assert again.wrote is True  # quick-scan output may replace quick-scan output
+
+
+def test_protected_note_suppresses_mark_seen(tmp_path, monkeypatch):
+    """If the run's note was protected, its papers were never shown — don't hide them."""
+    config_file = _write_config(tmp_path)
+    vault = tmp_path / "vault"
+    monkeypatch.setattr(pipeline, "search_arxiv", lambda categories, max_results: [_paper("1")])
+    monkeypatch.setattr(pipeline, "search_arxiv_by_keywords", lambda keywords, max_results: [])
+
+    note_path = pipeline.daily_note_path(vault, date.today())
+    note_path.parent.mkdir(parents=True, exist_ok=True)
+    note_path.write_text('---\ntags: ["claude-roundtable"]\n---\n# Round-table note\n', encoding="utf-8")
+
+    result = run_pipeline(config_path=config_file, vault_path=str(vault), dry_run=False)
+    assert result.kept_reason == "not-quick-scan"
+    assert not (vault / "99_System" / "PaperSignal" / "state.json").exists()
+
+
+def test_corrupt_state_raises_friendly_error(tmp_path):
+    state_path = tmp_path / "state.json"
+    state_path.write_text('{"seen_paper_ids": ["a", trunc', encoding="utf-8")
+    with pytest.raises(StateError) as exc:
+        PaperSignalState.load(state_path)
+    assert "state.json.bak" in str(exc.value)
+
+
+def test_state_save_is_atomic_and_leaves_no_tmp(tmp_path):
+    state = PaperSignalState(seen_paper_ids={"a"})
+    path = tmp_path / "99" / "state.json"
+    state.save(path)
+    assert PaperSignalState.load(path).seen_paper_ids == {"a"}
+    assert list(path.parent.glob("*.tmp")) == []
 
 
 def test_no_mark_seen_leaves_state_untouched(tmp_path, monkeypatch):

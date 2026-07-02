@@ -19,6 +19,7 @@ from paper_signal.pipeline import (
     run_pipeline,
     unsee,
 )
+from paper_signal.state import StateError
 
 _STATUS_ICON = {"ok": "✓", "warn": "⚠", "fail": "✗"}
 
@@ -35,12 +36,16 @@ def main(argv: list[str] | None = None) -> None:
             file=sys.stderr,
         )
         raise SystemExit(1) from exc
+    except StateError as exc:
+        print(f"State error: {exc}", file=sys.stderr)
+        print("`paper-signal doctor` shows the state check.", file=sys.stderr)
+        raise SystemExit(1) from exc
     except urllib.error.URLError as exc:
         # arXiv unreachable or rate-limiting (HTTP 429/503).
-        print(f"Network error: {exc}", file=sys.stderr)
+        print("Network error: could not reach arXiv (offline, or rate-limited).", file=sys.stderr)
+        print(f"Details: {exc}", file=sys.stderr)
         print(
-            "If arXiv is rate-limiting (HTTP 429), wait a few minutes and try again; "
-            "`paper-signal doctor` checks reachability.",
+            "Wait a few minutes and try again; `paper-signal doctor` checks reachability.",
             file=sys.stderr,
         )
         raise SystemExit(1) from exc
@@ -56,17 +61,22 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
             vault_path=args.vault,
             dry_run=args.dry_run,
             mark_seen=not args.no_mark_seen,
+            force=args.force,
         )
         print(f"Fetched papers: {result.fetched_count}")
         print(f"Selected papers: {result.selected_count}")
         if result.kept_existing:
-            print(
-                f"Kept existing note (this run matched 0 new papers): {result.daily_note_path}"
-            )
-            if args.no_mark_seen:
-                print("Tip: preview runs don't hide papers — 0 matches means the config found nothing new.")
+            if result.kept_reason == "not-quick-scan":
+                print(f"Kept existing note (not written by the quick scan): {result.daily_note_path}")
+                print("Tip: today's note came from the round-table or by hand; use --force to replace it.")
             else:
-                print("Tip: papers already shown are skipped; `paper-signal unsee --last-run` re-allows them.")
+                print(
+                    f"Kept existing note (this run matched 0 new papers): {result.daily_note_path}"
+                )
+                if args.no_mark_seen:
+                    print("Tip: preview runs don't hide papers — 0 matches means the config found nothing new.")
+                else:
+                    print("Tip: papers already shown are skipped; `paper-signal unsee --last-run` re-allows them.")
         else:
             action = "Would write" if args.dry_run else "Wrote"
             print(f"{action}: {result.daily_note_path}")
@@ -110,13 +120,17 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         if not entries:
             print(f"No papers recorded in the last {args.days} day(s).")
             return
+        print("(score = keyword-match relevance, higher is better)")
         current_date = None
         for entry in entries:
             if entry.get("date") != current_date:
                 current_date = entry.get("date")
                 print(f"\n{current_date}")
             score = entry.get("score", "--")
-            print(f"  [{score}] {entry.get('title', entry.get('paper_id', '?'))}")
+            paper_id = entry.get("paper_id", "")
+            title = entry.get("title") or paper_id or "?"
+            link = f" — https://arxiv.org/abs/{paper_id}" if paper_id else ""
+            print(f"  [{score}] {title}{link}")
         return
 
     if args.command == "init":
@@ -218,6 +232,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Write the note but don't mark papers seen (tuning mode: re-runs show them again)",
     )
+    run.add_argument(
+        "--force",
+        action="store_true",
+        help="Replace today's note even if it was authored by the round-table or by hand",
+    )
 
     fetch = subparsers.add_parser(
         "fetch",
@@ -271,7 +290,10 @@ def build_parser() -> argparse.ArgumentParser:
         default=os.environ.get("OBSIDIAN_VAULT_PATH"),
         help="Path to Obsidian vault",
     )
-    history_parser.add_argument("--days", type=int, default=7, help="How many days back (default 7)")
+    history_parser.add_argument(
+        "--days", type=int, default=7,
+        help="How many days back, inclusive of the boundary day (default 7)",
+    )
 
     init = subparsers.add_parser("init", help="Scaffold config + vault for a first run")
     init.add_argument(

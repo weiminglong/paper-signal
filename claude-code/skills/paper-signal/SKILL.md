@@ -21,13 +21,16 @@ separate API key**.
 
 ## Requirements
 
-- `config/interests.yaml` exists; `OBSIDIAN_VAULT_PATH` is set.
-- The `paper-signal` CLI is installed. If `paper-signal` is missing, run `pip install -e .` first.
+- `config/interests.yaml` exists (else run the **paper-signal-setup** skill first).
+- A vault path resolves via any of: `--vault`, `vault_path` in the config, or
+  `OBSIDIAN_VAULT_PATH`. Prefer passing `--vault` explicitly — env exports don't
+  persist across the fresh shells each command runs in.
+- The CLI runs either as `paper-signal` or as `python3 -m paper_signal` (equivalent,
+  no install needed). Use whichever works; `pip install -e .` is optional.
 
 ```bash
-test -f config/interests.yaml || echo "MISSING config/interests.yaml (copy config/interests.example.yaml)"
-test -n "$OBSIDIAN_VAULT_PATH" || echo "MISSING OBSIDIAN_VAULT_PATH"
-command -v paper-signal >/dev/null || pip install -e .
+test -f config/interests.yaml || echo "MISSING config/interests.yaml (run the paper-signal-setup skill)"
+command -v paper-signal >/dev/null || echo "using: python3 -m paper_signal"
 ```
 
 ## Reference prompts
@@ -64,7 +67,10 @@ were found today. Then stop (nothing to commit).
 
 If a non-empty note already exists at `daily_note_path` (e.g. a quick scan ran earlier
 today), do not blindly overwrite it — fold its papers into your analysis or confirm with
-the user before replacing it.
+the user before replacing it. (The reverse direction is protected in code: a later
+`paper-signal run` will refuse to replace your round-table note unless `--force` is
+passed — it detects the missing `deterministic-scan` frontmatter tag. Keep that tag out
+of round-table notes; use `claude-roundtable`.)
 
 ### 2. Round-table each deep paper
 

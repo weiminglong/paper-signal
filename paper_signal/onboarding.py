@@ -42,6 +42,7 @@ sources:
   arxiv:
     enabled: true
     # Also search arXiv by your keywords directly (helps fields without a category).
+    # Uses only the top ~10 keywords by domain priority; keep them field-specific.
     keyword_search: true
     categories:
       - "cs.AI"
@@ -231,13 +232,14 @@ def doctor(
                 try:
                     seen = PaperSignalState.load(state_file).seen_paper_ids
                     checks.append(Check("state", "ok", f"State readable ({len(seen)} seen)."))
-                except Exception as exc:  # noqa: BLE001
+                except Exception:  # noqa: BLE001
                     checks.append(
                         Check(
                             "state",
                             "warn",
-                            f"State unreadable: {exc}",
-                            "Delete state.json to reset dedup.",
+                            f"State file is corrupt: {state_file}",
+                            "Rename it (e.g. state.json.bak) to reset — this forgets "
+                            "seen papers AND the recommendation history.",
                         )
                     )
 

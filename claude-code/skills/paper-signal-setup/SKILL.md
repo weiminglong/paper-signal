@@ -59,8 +59,13 @@ the fast deterministic scan uses a fixed English template — so a non-English u
 translated reports should use the round-table mode (and scheduled runs will be English).
 
 Keyword tips (the matcher is literal): matching is exact word-boundary, **no stemming** —
-"manuscript" does not match "manuscripts", so list plural/variant forms explicitly. Prefer
-specific phrases over single generic words ("working memory model", not "memory").
+"manuscript" does not match "manuscripts", and a spaced phrase does not match its
+hyphenated form ("gravitational wave" ≠ "gravitational-wave"), so list plural and
+hyphen/space variants explicitly. Prefer specific phrases over single generic words
+("working memory model", not "memory"). In cross-cutting domains, avoid generic ML terms
+("machine learning", "neural network") as keywords — the server-side keyword search spans
+ALL of arXiv, so generic terms import junk from unrelated fields; use field-qualified
+phrases instead ("galaxy classification", "photometric redshift").
 
 ### 4. Confirm the vault
 Read the path back in plain English ("I'll save your notes in *<folder>* — sound right?"). Sanity-
@@ -103,7 +108,13 @@ Summarize the note in plain English and tell them where it is in Obsidian
 - **0 papers selected** → keywords too narrow; add broader synonyms **and plural/variant
   forms** (matching is exact, no stemming) and re-run.
 - **Off-topic picks** (a broad word like "evaluation" or "model" pulled in noise) → tighten
-  the phrase or add an `excluded_keywords` entry, and re-run.
+  the phrase or add an `excluded_keywords` entry, and re-run. Note the server-side keyword
+  search only uses the **top ~10 keywords by domain priority** — put must-hit keywords in
+  high-priority domains, or they won't reach arXiv's search at all.
+- **"Too academic / too dry"** → that's what paper abstracts sound like; the fix is the
+  round-table mode (plain-English cards), not keyword surgery. Use `excluded_keywords`
+  sparingly for genre words — it's a hard drop on any title/abstract match ("survey" also
+  kills "A Survey of Exoplanet Atmospheres" they might want).
 Iterate until the note is genuinely useful — don't leave them with an empty or noisy one.
 
 ### 8. Offer the deep version, then finalize
@@ -125,8 +136,8 @@ me 'run my paper report'."* Useful ongoing commands you can run for them:
 - `paper-signal history --days 7` — "what did you find this week?"
 - `paper-signal unsee --last-run` — re-allow the last run's papers (e.g. after retuning).
 Mention scheduling exists (a daily automatic run; note the scheduled note is the English
-quick-scan) and offer to set it up later if they'd like. Do not set up cron/launchd unless
-they ask.
+quick-scan — though it will never replace a same-day round-table note, which is protected)
+and offer to set it up later if they'd like. Do not set up cron/launchd unless they ask.
 
 ## arXiv category cheat-sheet (plain topic → code)
 
@@ -153,6 +164,12 @@ they ask.
 - Statistics / causal inference → `stat.ME` (methodology), `stat.AP` (applied), `stat.ML`
 - Climate / earth science → `physics.ao-ph` (atmospheric & oceanic), `physics.geo-ph`
   (geophysics); attribution/impact methods often `stat.AP`
+- Astronomy / astrophysics → `astro-ph.*`: exoplanets `astro-ph.EP`, high-energy
+  `astro-ph.HE`, instrumentation & surveys `astro-ph.IM`, stellar `astro-ph.SR`, galaxies
+  `astro-ph.GA`, cosmology `astro-ph.CO`; **gravitational waves → `gr-qc`** (+ astro-ph.HE)
+- Cryptocurrency / blockchain / DeFi → `cs.CR` + `q-fin.TR` (note: "crypto" here is NOT
+  just cryptography — include blockchain/market keywords, not only cs.CR)
+- Education / edtech / AI for learning → `cs.CY` + `cs.HC` (+ `cs.CL` for tutoring/LLM work)
 - Materials science / batteries / solar cells → `cond-mat.mtrl-sci` (+ `cond-mat.soft`,
   `cond-mat.supr-con` as fits); ML-for-materials also cross-posts to `cs.LG`
 - Digital humanities / historical documents / cultural heritage → `cs.CL` + `cs.CV` +

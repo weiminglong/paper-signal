@@ -29,6 +29,7 @@ class PipelineResult:
     daily_note_path: Path
     wrote: bool
     kept_existing: bool = False
+    kept_reason: str = ""
 
 
 @dataclass(frozen=True)
@@ -104,11 +105,13 @@ def run_pipeline(
     vault_path: str | None,
     dry_run: bool,
     mark_seen: bool = True,
+    force: bool = False,
 ) -> PipelineResult:
     """Deterministic path: fetch, score, deterministic panel, write note (path A).
 
     mark_seen=False writes the note but leaves dedup state untouched — the tuning
     mode: iterate on keywords without hiding this run's papers from the next one.
+    force=True overwrites today's note even if it wasn't quick-scan-authored.
     """
     config = load_config(config_path)
     vault = _resolve_vault(vault_path, config)
@@ -124,7 +127,13 @@ def run_pipeline(
         scored_papers=selected,
         run_date=run_date,
         dry_run=dry_run,
+        force=force,
     )
+
+    # If the note was protected (e.g. a round-table note owns today), don't mark
+    # this run's papers seen either — nothing was actually shown to the user.
+    if write_result.kept_existing and write_result.kept_reason == "not-quick-scan":
+        mark_seen = False
 
     if not dry_run and mark_seen and selected:
         run_marker = _new_run_marker()
@@ -148,6 +157,7 @@ def run_pipeline(
         daily_note_path=write_result.daily_note_path,
         wrote=write_result.wrote,
         kept_existing=write_result.kept_existing,
+        kept_reason=write_result.kept_reason,
     )
 
 

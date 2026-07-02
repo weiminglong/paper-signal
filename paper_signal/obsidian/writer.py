@@ -14,8 +14,24 @@ from paper_signal.models import AppConfig, ScoredPaper
 class WriteResult:
     daily_note_path: Path
     wrote: bool
-    # True when an empty run was suppressed to protect an existing note for the day.
+    # True when the write was suppressed to protect an existing note for the day.
     kept_existing: bool = False
+    # Why it was kept: "empty-run" (this run matched nothing) or
+    # "not-quick-scan" (today's note was authored by the round-table or by hand).
+    kept_reason: str = ""
+
+
+def _is_quick_scan_note(note_path: Path) -> bool:
+    """True if the existing note was written by the deterministic template.
+
+    The template tags its output `deterministic-scan` in the YAML frontmatter;
+    round-table notes carry `claude-roundtable`, and hand-written notes carry
+    neither. Only our own quick-scan output is safe to replace."""
+    try:
+        head = note_path.read_text(encoding="utf-8", errors="replace")[:500]
+    except OSError:
+        return False
+    return "deterministic-scan" in head
 
 
 def init_vault(vault_path: str | Path) -> None:
@@ -39,14 +55,27 @@ def write_daily_note(
     scored_papers: list[ScoredPaper],
     run_date: date,
     dry_run: bool,
+    force: bool = False,
 ) -> WriteResult:
     vault = Path(vault_path)
     init_vault(vault)
     note_path = daily_note_path(vault, run_date)
-    # Guard: a re-run that matched nothing (e.g. everything already seen) must not
-    # replace a note the user already has for today with "No matching papers".
-    if not scored_papers and note_path.exists() and note_path.stat().st_size > 0:
-        return WriteResult(daily_note_path=note_path, wrote=False, kept_existing=True)
+    existing = note_path.exists() and note_path.stat().st_size > 0
+    if existing and not force:
+        # A round-table or hand-authored note must never be silently replaced by
+        # the quick-scan template — leftovers make same-day re-runs the common case.
+        if not _is_quick_scan_note(note_path):
+            return WriteResult(
+                daily_note_path=note_path, wrote=False,
+                kept_existing=True, kept_reason="not-quick-scan",
+            )
+        # A re-run that matched nothing (e.g. everything already seen) must not
+        # replace a note the user already has for today with "No matching papers".
+        if not scored_papers:
+            return WriteResult(
+                daily_note_path=note_path, wrote=False,
+                kept_existing=True, kept_reason="empty-run",
+            )
     body = render_daily_note(config=config, scored_papers=scored_papers, run_date=run_date)
     if not dry_run:
         note_path.write_text(body, encoding="utf-8")

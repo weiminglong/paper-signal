@@ -13,7 +13,7 @@ Requirements:
 - The vault path is set via `vault_path` in the config or `OBSIDIAN_VAULT_PATH`
   (resolution order: `--vault` → `OBSIDIAN_VAULT_PATH` → config `vault_path`).
 
-The automation runs the deterministic quick list (English). For the richer AI-written
+The automation runs the quick list (English). For the richer AI-written
 "full report", run the prompt interactively in Codex and follow
 `claude-code/skills/paper-signal/SKILL.md` — the workflow is agent-agnostic
 (fetch JSON → analyze → write the note → commit).

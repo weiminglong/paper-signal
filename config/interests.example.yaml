@@ -1,10 +1,9 @@
-# Report language for Claude Code round-table notes ("en", "zh", ...).
-# The deterministic quick-scan template stays English.
+# Language for the full report (AI-written; "en", "zh", ...). The quick list is English.
 language: "en"
 vault_path: ""
 
 daily:
-  # "full" = AI round-table report via Claude Code; "quick" = fast deterministic list.
+  # Daily default: "full" = AI-written full report; "quick" = fast quick list.
   report_mode: "full"
   # Fetch budget, split across categories (100 over 4 categories = ~25 newest each).
   candidate_limit: 100

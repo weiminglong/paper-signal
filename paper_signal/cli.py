@@ -86,8 +86,8 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         print(f"Selected papers: {result.selected_count}")
         if result.kept_existing:
             if result.kept_reason == "not-quick-scan":
-                print(f"Kept existing note (not written by the quick scan): {result.daily_note_path}")
-                print("Tip: today's note came from the round-table or by hand; use --force to replace it.")
+                print(f"Kept existing note (not written by the quick list): {result.daily_note_path}")
+                print("Tip: today's note came from the full report or by hand; use --force to replace it.")
             else:
                 print(
                     f"Kept existing note (this run matched 0 new papers): {result.daily_note_path}"
@@ -258,7 +258,7 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--force",
         action="store_true",
-        help="Replace today's note even if it was authored by the round-table or by hand",
+        help="Replace today's note even if it was authored by the full report or by hand",
     )
 
     fetch = subparsers.add_parser(

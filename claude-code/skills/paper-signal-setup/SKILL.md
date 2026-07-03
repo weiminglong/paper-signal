@@ -26,12 +26,13 @@ folder — okay?" Re-ask only for genuinely new scope (e.g. installing Python it
 
 ### 2. Prerequisites (fix everything for them)
 
-**CLI.** Check `command -v paper-signal`. If missing, try in order, stopping at the first
-that works: `pip install -e .` → `pip install --user -e .` (PEP 668) → venv
-(`python3 -m venv .venv && . .venv/bin/activate && pip install -e .`) → just run
-`python3 -m paper_signal <args>` everywhere (equivalent, no install). If `python3` is
-missing, they need Python 3.9+ (macOS: `brew install python`; else python.org) — consent
-first.
+**CLI.** Inside a repo checkout, prefer `python3 -m paper_signal <args>` — it is
+guaranteed to run *this* repo's code (a `paper-signal` already on PATH may be a stale
+install from another checkout). If `python3 -m paper_signal --version` fails, install:
+`pip install -e .` → `pip install --user -e .` (PEP 668) → venv
+(`python3 -m venv .venv && . .venv/bin/activate && pip install -e .`). If `python3`
+itself is missing, they need Python 3.9+ (macOS: `brew install python`; else
+python.org) — consent first.
 
 **Obsidian + a vault.** If they don't have Obsidian, point to https://obsidian.md (free).
 If they have no vault or aren't sure where it is, offer to look in common spots

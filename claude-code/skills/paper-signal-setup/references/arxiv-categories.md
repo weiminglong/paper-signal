@@ -29,6 +29,11 @@
 - Cryptocurrency / blockchain / DeFi → `cs.CR` + `q-fin.TR` (note: "crypto" here is NOT
   just cryptography — include blockchain/market keywords, not only cs.CR)
 - Education / edtech / AI for learning → `cs.CY` + `cs.HC` (+ `cs.CL` for tutoring/LLM work)
+- Chemistry / chemical physics / synthesis / catalysis → `physics.chem-ph` +
+  `cond-mat.mtrl-sci`; ML-for-molecules cross-posts to `cs.LG` (+ `q-bio.BM` for
+  biomolecules)
+- Social networks / computational social science / opinion dynamics / misinformation →
+  `cs.SI`, `physics.soc-ph` (+ `cs.CY` for platforms & society)
 - Materials science / batteries / solar cells → `cond-mat.mtrl-sci` (+ `cond-mat.soft`,
   `cond-mat.supr-con` as fits); ML-for-materials also cross-posts to `cs.LG`
 - Digital humanities / historical documents / cultural heritage → `cs.CL` + `cs.CV` +

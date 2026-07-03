@@ -18,6 +18,9 @@ class DailySettings:
     recommendation_count: int = 10
     deep_analysis_count: int = 3
     skip_seen: bool = True
+    # "full" = AI round-table report (Claude Code path); "quick" = deterministic list.
+    # Set at onboarding so day-2 "run my paper report" honors the user's choice.
+    report_mode: str = "full"
 
 
 @dataclass(frozen=True)

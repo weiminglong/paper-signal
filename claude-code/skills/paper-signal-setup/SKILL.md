@@ -5,213 +5,128 @@ description: Set up PaperSignal from scratch for a non-technical user, through c
 
 # PaperSignal — Conversational Setup
 
-Your job is to set up PaperSignal for someone who may have **no coding experience**. Do all
-the technical work yourself; the user only answers plain-English questions. Be warm, brief,
-and reassuring. Never ask them to write YAML, run commands, or understand the terminal.
+Set up PaperSignal for someone who may have **no coding experience**. You do all the
+technical work; the user only answers plain-English questions. Be warm, brief, reassuring.
 
-## Principles
+## User-facing vocabulary
 
-- **You do the work.** Run every command yourself; explain results in one plain sentence.
-- **Confirm before anything that installs software, touches the network, or writes files
-  outside the project** — say what you're about to do and why, in plain terms.
-- **Ask one thing at a time.** Short questions, examples included.
-- **Fail gently.** If a step can't complete, say so plainly and try the next fallback — never
-  show the user a traceback or an error to solve.
-- **Instant gratification first, depth second.** Get them a real report fast, then offer the
-  deeper AI analysis.
+The product has two report styles. To the user they are only ever **"quick list"** (fast,
+plain, English-only) and **"full report"** (AI-written, richer, in their language). Never
+say: deterministic, quick-scan, round-table, template, frontmatter, tag, seen-state,
+`--force`, `unsee`, or any flag/command name. Never surface raw CLI output, YAML, or
+errors — summarize outcomes in one plain sentence; you solve every problem yourself.
 
 ## Flow
 
-### 1. Welcome & orient
-One or two sentences: "PaperSignal reads new research papers every day and writes you a plain
-summary in Obsidian. I'll set it up — I'll ask you a few questions and handle the rest."
+### 1. Welcome & consent
+One line: "PaperSignal reads new research papers every day and writes you a plain summary
+in Obsidian. I'll set it up — a few questions, I handle the rest." Then one upfront
+consent: "I'll need to install one small program and create a settings file in this
+folder — okay?" Re-ask only for genuinely new scope (e.g. installing Python itself).
 
-### 2. Prerequisites (fix everything for them, with consent)
+### 2. Prerequisites (fix everything for them)
 
-**PaperSignal CLI.** Check `command -v paper-signal`. If it's missing, install it — try these in
-order, stop at the first that works, and translate any error into one plain sentence (never show
-a traceback):
-1. `pip install -e .` from the repo root.
-2. `pip install --user -e .` (if the system Python is "externally managed" / PEP 668).
-3. a virtualenv: `python3 -m venv .venv && . .venv/bin/activate && pip install -e .`.
-4. zero-install with uv/pipx (see the README), or simply run the CLI as
-   `python3 -m paper_signal <args>` everywhere — it's equivalent and needs no install.
+**CLI.** Check `command -v paper-signal`. If missing, try in order, stopping at the first
+that works: `pip install -e .` → `pip install --user -e .` (PEP 668) → venv
+(`python3 -m venv .venv && . .venv/bin/activate && pip install -e .`) → just run
+`python3 -m paper_signal <args>` everywhere (equivalent, no install). If `python3` is
+missing, they need Python 3.9+ (macOS: `brew install python`; else python.org) — consent
+first.
 
-If `python3` itself is missing, tell them plainly they need Python 3.9+ and offer to install it
-(macOS: `brew install python`; otherwise point to python.org) — get consent first.
+**Obsidian + a vault.** If they don't have Obsidian, point to https://obsidian.md (free).
+If they have no vault or aren't sure where it is, offer to look in common spots
+(`~/Documents`, `~/Obsidian`, iCloud) — or create one at a clear location like
+`~/Documents/PaperSignal Vault` via `paper-signal init-vault --vault "<path>"`. Never
+assume a vault exists. Read the chosen path back in plain English and sanity-check it
+(reject a Windows `C:\...` path on a Mac).
 
-**Obsidian + a vault.** Confirm they use Obsidian and roughly where their vault folder is.
-- If they're unsure where it is, offer to look in common spots (`~/Documents`, `~/Obsidian`,
-  iCloud) and confirm before using anything.
-- **If they don't have Obsidian**, point them to https://obsidian.md to install it (it's free).
-- **If they have no vault yet, or aren't sure, offer to create one for them.** Pick a clear
-  location like `~/Documents/PaperSignal Vault`, confirm it in plain English, and create it with
-  `paper-signal init-vault --vault "<that path>"`. Never assume a vault already exists.
+### 3. Interview (plain English)
+- Topics they follow (2–4 is plenty; examples: "AI agents, robotics, cancer biology").
+- A few keywords per topic, and which topics matter most.
+- Which language they want reports in.
+- Quick list or full report as their daily default? (Full report = richer and in their
+  language, but uses more Claude usage. If they chose a non-English language, mention the
+  quick list is English-only.)
 
-### 3. Interview their interests (plain English)
-Ask what fields/topics they follow. Give examples: "e.g. AI agents, robotics, cancer biology,
-climate models." Then ask for a few specific keywords they'd want to catch, and which matter
-most. Keep it conversational — 2 to 4 topics is plenty. Do **not** show them arXiv codes.
+Do **not** show them arXiv codes. Keyword facts to apply silently: matching is exact
+word-boundary with no stemming (list plurals and hyphen/space variants: "manuscripts",
+"gravitational-wave"); prefer field-qualified phrases over generic terms ("galaxy
+classification", not "machine learning" — generic keywords pull junk from all of arXiv).
 
-Also ask which language they'd like their reports in. Set `language:` in the config to match.
-Be honest about what it controls: the AI round-table notes are written in that language, but
-the fast deterministic scan uses a fixed English template — so a non-English user who wants
-translated reports should use the round-table mode (and scheduled runs will be English).
+### 4. Scaffold + write the config
+- From the repo root: `paper-signal init --vault "<their vault>"` (pass `--vault`
+  explicitly — env exports don't persist across the fresh shell each command runs in).
+- Then edit `config/interests.yaml` yourself: one `research_domains` entry per topic
+  (plain name, their keywords, `priority` 1–5), with `arxiv_categories` mapped via
+  `references/arxiv-categories.md` (read it now). Set `language:` and
+  `daily.report_mode:` (`full` or `quick`) from the interview. Remove placeholder domains.
+- If the vault lives inside the repo, add its path to `.gitignore` (better: keep it
+  outside).
 
-Keyword tips (the matcher is literal): matching is exact word-boundary, **no stemming** —
-"manuscript" does not match "manuscripts", and a spaced phrase does not match its
-hyphenated form ("gravitational wave" ≠ "gravitational-wave"), so list plural and
-hyphen/space variants explicitly. Prefer specific phrases over single generic words
-("working memory model", not "memory"). In cross-cutting domains, avoid generic ML terms
-("machine learning", "neural network") as keywords — the server-side keyword search spans
-ALL of arXiv, so generic terms import junk from unrelated fields; use field-qualified
-phrases instead ("galaxy classification", "photometric redshift").
-
-### 4. Confirm the vault
-Read the path back in plain English ("I'll save your notes in *<folder>* — sound right?"). Sanity-
-check it: reject an obviously wrong path (e.g. a Windows `C:\...` path on a Mac) and ask again.
-Pass the path explicitly with `--vault "<path>"` on each command, or let `init` write it into the
-config (next step) — do **not** rely on `export OBSIDIAN_VAULT_PATH`, because each command you run
-is a fresh shell and the export won't carry over.
-
-### 5. Scaffold + write the config for them
-- Run `paper-signal init --vault "<their vault>"` from the repo root (or pass an absolute
-  `--config`, since it defaults to a path relative to the current folder). This writes
-  `config/interests.yaml` with the vault baked in and scaffolds the vault folders.
-- Then **edit `config/interests.yaml` yourself** to encode the interview: turn each topic into a
-  `research_domains` entry with a plain-English name, the user's keywords, a `priority` (1–5,
-  higher = they care more), and the matching `arxiv_categories` from the cheat-sheet below. Remove
-  the placeholder domains that don't apply.
-- If the vault lives *inside* the repo folder, add its path to `.gitignore` so their notes and
-  reading state are never committed (better still: keep the vault outside the repo).
-
-### 6. Validate
-Run `paper-signal doctor`. Fix any ✗/⚠ config or vault items and re-run. An arXiv **warning** is
-environmental (network/rate-limit) — reassure and move on, don't loop trying to "fix" it. Report
-"all set" in plain terms.
-
-### 7. First report (fast + free) — tune in preview mode
-Run the deterministic scan **in preview mode** so tuning re-runs don't hide papers:
-`paper-signal run --config config/interests.yaml --vault "<their vault>" --no-mark-seen`
-
-Why: a normal `run` marks every shown paper as "seen" and skips it next time. During tuning
-that silently makes the user's best papers vanish between iterations. `--no-mark-seen` writes
-the note but keeps papers eligible, so you can iterate freely. (If you already did a normal
-run, `paper-signal unsee --last-run` re-allows those papers.)
-
-Summarize the note in plain English and tell them where it is in Obsidian
-(`10_Daily/<date>-paper-recommendations.md`). Then react to what you actually got:
-- **Few papers, or thin/niche field** → raise `daily.candidate_limit` first (it is **split
-  across categories**: 100 over 4 categories ≈ 25 newest each — a few hours of a busy
-  category). 300 is a fine tuning value. Keyword search (`sources.arxiv.keyword_search`,
-  on by default) also pulls matches from outside the listed categories.
-- **0 papers selected** → keywords too narrow; add broader synonyms **and plural/variant
-  forms** (matching is exact, no stemming) and re-run.
-- **Off-topic picks** (a broad word like "evaluation" or "model" pulled in noise) → tighten
-  the phrase or add an `excluded_keywords` entry, and re-run. Note the server-side keyword
-  search only uses the **top ~10 keywords by domain priority** — put must-hit keywords in
-  high-priority domains, or they won't reach arXiv's search at all.
-- **"Too academic / too dry"** → that's what paper abstracts sound like; the fix is the
-  round-table mode (plain-English cards), not keyword surgery. Use `excluded_keywords`
-  sparingly for genre words — it's a hard drop on any title/abstract match ("survey" also
-  kills "A Survey of Exoplanet Atmospheres" they might want).
-Iterate until the note is genuinely useful — don't leave them with an empty or noisy one.
-
-### 8. Offer the deep version, then finalize
-Explain there's a richer mode where AI agents debate each top paper and write a more
-insightful report (in their chosen language) — but note it uses more of their Claude usage.
-
-- **If they want it**: run the **paper-signal** skill (the round-table) now. Because tuning
-  used `--no-mark-seen`, today's papers are still eligible — the round-table gets the full
-  candidate pool, not leftovers. Its `commit` step records the papers as seen.
-- **If not**: finalize with one normal run (no `--no-mark-seen`) so today's papers are
-  recorded and tomorrow brings fresh ones.
-
-Never run the quick scan in normal mode and *then* offer the deep version on the same day —
-the deep run would only see leftovers.
-
-### 9. Hand off
-Tell them how to use it from now on, in one line: *"Whenever you want a fresh report, just tell
-me 'run my paper report'."* Useful ongoing commands you can run for them:
-- `paper-signal history --days 7` — "what did you find this week?"
-- `paper-signal unsee --last-run` — re-allow the last run's papers (e.g. after retuning).
-Mention scheduling exists (a daily automatic run; note the scheduled note is the English
-quick-scan — though it will never replace a same-day round-table note, which is protected)
-and offer to set it up later if they'd like. Do not set up cron/launchd unless they ask.
-
-## arXiv category cheat-sheet (plain topic → code)
-
-- AI / agents / LLMs → `cs.AI`, `cs.CL`
-- Machine learning / deep learning → `cs.LG`, `stat.ML`
-- NLP / language → `cs.CL`
-- Computer vision / images → `cs.CV`
-- Robotics → `cs.RO`
-- Multi-agent systems → `cs.MA`, `cs.AI`
-- Speech / audio / music → `cs.SD`, `eess.AS`
-- Security / cryptography → `cs.CR`
-- Human-computer interaction → `cs.HC`
-- Information retrieval / search / recsys → `cs.IR`
-- Software engineering → `cs.SE`
-- Systems / distributed → `cs.DC`, `cs.OS`
-- Biology → `q-bio.*`: neuroscience `q-bio.NC`, genomics & gene editing `q-bio.GN`, proteins &
-  molecular structure (AlphaFold-style) `q-bio.BM`, quantitative methods `q-bio.QM`, molecular
-  networks `q-bio.MN`, cell behavior `q-bio.CB`
-- Economics / econometrics → `econ.EM` (econometrics), `econ.TH` (theory), `econ.GN` (general);
-  causal inference often lives in `stat.ME`
-- Finance / quant / markets → `q-fin.*`: trading & microstructure `q-fin.TR`, mathematical
-  finance `q-fin.MF`, portfolio `q-fin.PM`, risk `q-fin.RM`, computational `q-fin.CP`
-- Game theory / mechanism design / auctions → `cs.GT`, `econ.TH`
-- Statistics / causal inference → `stat.ME` (methodology), `stat.AP` (applied), `stat.ML`
-- Climate / earth science → `physics.ao-ph` (atmospheric & oceanic), `physics.geo-ph`
-  (geophysics); attribution/impact methods often `stat.AP`
-- Astronomy / astrophysics → `astro-ph.*`: exoplanets `astro-ph.EP`, high-energy
-  `astro-ph.HE`, instrumentation & surveys `astro-ph.IM`, stellar `astro-ph.SR`, galaxies
-  `astro-ph.GA`, cosmology `astro-ph.CO`; **gravitational waves → `gr-qc`** (+ astro-ph.HE)
-- Cryptocurrency / blockchain / DeFi → `cs.CR` + `q-fin.TR` (note: "crypto" here is NOT
-  just cryptography — include blockchain/market keywords, not only cs.CR)
-- Education / edtech / AI for learning → `cs.CY` + `cs.HC` (+ `cs.CL` for tutoring/LLM work)
-- Materials science / batteries / solar cells → `cond-mat.mtrl-sci` (+ `cond-mat.soft`,
-  `cond-mat.supr-con` as fits); ML-for-materials also cross-posts to `cs.LG`
-- Digital humanities / historical documents / cultural heritage → `cs.CL` + `cs.CV` +
-  `cs.DL` (digital libraries) + `cs.CY`; HTR/OCR work often lands in `cs.CV` and `cs.DL`
-- Other physics / math → the specific `physics.*` / `math.*` subcategory — but check the
-  domain-specific archives first (`cond-mat.*`, `astro-ph.*`, `q-bio.*`, `q-fin.*`); many
-  fields do NOT live under `physics.*`
-
-If a topic isn't listed, pick the closest code or ask the user to clarify the field. For a
-cross-cutting theme with no home category (e.g. "evaluation", "benchmarks"), model it as
-**keywords** across the relevant categories rather than a category of its own. Papers are often
-cross-posted, so listing 2–3 categories per domain (not one) catches more of the real work —
-e.g. market microstructure lives under `q-fin.TR` far more than `econ.*`.
-
-## Config shape (you fill this in; the user never sees it)
+Config shape (`sources.arxiv.categories` is optional — it defaults to the union of the
+domains' categories):
 
 ```yaml
 language: "en"
-vault_path: "<their vault>"     # already written by init
+vault_path: "<their vault>"     # written by init
 daily:
+  report_mode: "full"           # their day-2 default: full | quick
   candidate_limit: 100
   recommendation_count: 10
-  deep_analysis_count: 3        # how many papers get the AI round-table
+  deep_analysis_count: 3        # papers that get the full AI treatment
   skip_seen: true
 research_domains:
   "<Plain topic name>":
-    priority: 5                 # 1–5, higher = they care more
+    priority: 5
     keywords: ["<their words>", "..."]
     arxiv_categories: ["cs.AI", "..."]
-excluded_keywords: []           # add terms they want filtered out
+excluded_keywords: []
 ```
 
-`sources.arxiv.categories` is optional — if you omit it, PaperSignal fetches the union of every
-domain's `arxiv_categories`. Set it only to narrow the first run for speed.
+### 5. Validate
+`paper-signal doctor`. Fix any ✗/⚠ config or vault items and re-run. An arXiv warning is
+environmental (network/rate-limit) — reassure and move on. Report "all set" plainly.
+
+### 6. First report — tune in preview mode
+Tune with `paper-signal run --vault "<vault>" --no-mark-seen` (preview: papers stay
+eligible between iterations; a normal run would hide everything it shows — recover with
+`paper-signal unsee --last-run` if that happened). Summarize the note plainly and tell
+them where to find it ("in Obsidian, in the 10_Daily folder — today's date"). Then tune:
+
+- Few papers / niche field → raise `daily.candidate_limit` to ~300 first (it's split
+  across categories; keyword search also reaches outside them).
+- 0 papers → broaden keywords, add plural/variant forms.
+- Off-topic picks → tighten phrases or add `excluded_keywords`. (Server-side keyword
+  search uses only the top ~10 keywords by domain priority — must-hits go in
+  high-priority domains.)
+- "Too academic / dry" → that's abstracts; the fix is the full report, not keyword
+  surgery. Use `excluded_keywords` sparingly (hard drop: "survey" also kills surveys
+  they'd want).
+
+Iterate until genuinely useful — never leave them with an empty or noisy first note.
+
+### 7. Finalize per their chosen mode
+- **Full report**: run the **paper-signal** skill now. Preview tuning left today's papers
+  eligible, so it gets the full candidate pool; its commit step records them as seen.
+- **Quick list**: one normal run (no `--no-mark-seen`) so today's papers are recorded.
+
+Never do a normal quick run and *then* offer the full report the same day — it would only
+see leftovers.
+
+### 8. Hand off
+One line: *"Whenever you want a fresh report, just tell me 'run my paper report'."* Give
+them the mental model: *"You won't be shown the same paper twice — ask me 'what did you
+find this week?' anytime, and I can bring papers back if you ever want a redo."* (Those
+map to `paper-signal history --days 7` and `paper-signal unsee`, which you run for them.)
+Offer scheduling later if they ask; if their reports are non-English, note the automatic
+daily version can only write the English quick list (it will never replace a same-day
+full report — that's protected).
 
 ## Rules
 
-- Get consent before installing anything or touching files outside the project.
-- Never expose YAML, commands, or errors as the user's problem to solve — you solve them.
-- **Never surface raw CLI output.** `init`/`doctor`/`run` print developer-facing lines (config
-  paths, "Next steps", `--dry-run` hints). Summarize the *outcome* in one plain sentence; never
-  tell the user to edit a file or run a command themselves.
-- Run commands from the repo root (or pass an absolute `--config`), and pass `--vault` explicitly
-  rather than relying on an exported env var (each command is a fresh shell).
+- One upfront consent (step 1); re-ask only for new scope. Never install or write outside
+  the project without it.
+- Run commands from the repo root; pass `--vault` explicitly.
+- Everything in "User-facing vocabulary" above: plain names, no jargon, no raw output, no
+  tracebacks — you solve errors, silently trying the next fallback.
 - Don't commit their personal config, vault contents, or reading state to git.

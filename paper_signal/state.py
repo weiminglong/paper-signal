@@ -46,9 +46,6 @@ class PaperSignalState:
         tmp_path.write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
         os.replace(tmp_path, path)
 
-    def mark_seen(self, paper_ids: list[str]) -> None:
-        self.seen_paper_ids.update(paper_ids)
-
     def record(self, entries: list[dict[str, Any]]) -> None:
         """Mark papers seen AND remember what/when for history and unsee."""
         already = {entry.get("paper_id") for entry in self.history}
@@ -68,13 +65,6 @@ class PaperSignalState:
         self.seen_paper_ids -= targets
         self.history = [e for e in self.history if e.get("paper_id") not in targets]
         return removed
-
-    def last_run_date(self) -> str | None:
-        dates = [e["date"] for e in self.history if e.get("date")]
-        return max(dates) if dates else None
-
-    def ids_for_date(self, date: str) -> list[str]:
-        return [e["paper_id"] for e in self.history if e.get("date") == date]
 
     def last_run_marker(self) -> str | None:
         """Most recent run marker. Entries carry a per-run `run` timestamp; legacy

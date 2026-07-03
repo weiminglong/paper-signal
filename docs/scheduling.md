@@ -53,8 +53,3 @@ Use `codex/automation_prompt.md` as a standalone project automation prompt. Code
 Automations are local to the user's Codex app: the machine must be on, Codex running, and
 the project on disk.
 
-## GitHub Actions
-
-GitHub Actions can run the workflow in the cloud, but it cannot write to a local Obsidian
-vault. Use it only when the target vault or markdown output lives in the repository or is
-exported as an artifact.

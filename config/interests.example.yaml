@@ -4,6 +4,8 @@ language: "en"
 vault_path: ""
 
 daily:
+  # "full" = AI round-table report via Claude Code; "quick" = fast deterministic list.
+  report_mode: "full"
   # Fetch budget, split across categories (100 over 4 categories = ~25 newest each).
   candidate_limit: 100
   recommendation_count: 10
@@ -12,7 +14,6 @@ daily:
 
 sources:
   arxiv:
-    enabled: true
     # Also search arXiv by your keywords directly (helps thin-coverage fields).
     # Uses only the top ~10 keywords by domain priority; spans ALL of arXiv, so
     # keep keywords field-specific (generic terms pull in unrelated papers).

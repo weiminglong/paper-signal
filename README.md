@@ -1,8 +1,7 @@
 # PaperSignal
 
-A local-first research paper agent that turns new papers into daily Obsidian notes.
-
-PaperSignal fetches recent papers, scores them against your research interests, and writes a daily read into your Obsidian vault. It runs two ways: a fast deterministic CLI, or a Claude Code **round-table** in which a Moderator and persona subagents debate each top paper and author the note. It is designed to run as a normal CLI first, with optional scheduling through Codex Automations, Claude Code, cron, launchd, Windows Task Scheduler, or GitHub Actions.
+PaperSignal reads new research papers every day and writes you a short, plain-English
+report in Obsidian, matched to your interests.
 
 ## No coding experience? Start here
 
@@ -11,8 +10,9 @@ You don't need to write any code, edit any files, or use the terminal. If you ha
 does the whole setup for you — you just answer a few plain-English questions.
 
 1. **Get this project onto your computer.** Click the green **Code** button on GitHub →
-   **Download ZIP**, then unzip it. (Or just ask Claude Code to download it for you.)
-2. **Open Claude Code in that folder.**
+   **Download ZIP**, then unzip it.
+2. **Open Claude Code in that folder.** (Desktop app: open Claude Code and choose that
+   folder. Terminal: open the folder in Terminal and type `claude`.)
 3. **Paste this** and answer its questions:
 
    > Set up PaperSignal for me. I follow research on **_(your topics — e.g. AI agents, robotics)_**,
@@ -24,18 +24,14 @@ paper report. From then on, just say **“run my paper report”** whenever you 
 > Under the hood this runs the `paper-signal-setup` skill (or the `/paper-signal-setup`
 > command). Everything below is for people who want to run it themselves from the terminal.
 
-## Status
+## How it works
 
-Early scaffold. The current implementation includes:
-
-- arXiv search
-- YAML-based research interests
-- deterministic paper scoring
-- a deterministic quick-scan panel (`paper-signal run`)
-- a Claude Code multi-agent round-table that authors deep daily notes (`paper-signal fetch` + skill)
-- Obsidian daily note rendering
-- local state for previously seen papers
-- Codex and Claude Code integration prompts
+It runs two ways over one engine: a fast deterministic CLI (fetch arXiv, score against
+your YAML interests, write the note), or a Claude Code **round-table** in which a
+Moderator and persona subagents debate each top paper and author a richer note
+(`paper-signal fetch` + the `paper-signal` skill). Seen papers are tracked locally so
+you never get repeats. Scheduling works through Claude Code, Codex Automations, cron,
+or launchd.
 
 ## Quickstart
 

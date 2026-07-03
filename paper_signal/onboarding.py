@@ -31,6 +31,8 @@ language: "en"
 vault_path: ""
 
 daily:
+  # "full" = the AI round-table report when run via Claude Code; "quick" = fast list.
+  report_mode: "full"
   # Fetch budget, SPLIT ACROSS categories (100 over 4 categories = ~25 newest each).
   # Few or off-topic results? Raise this before touching keywords.
   candidate_limit: 100
@@ -40,7 +42,6 @@ daily:
 
 sources:
   arxiv:
-    enabled: true
     # Also search arXiv by your keywords directly (helps fields without a category).
     # Uses only the top ~10 keywords by domain priority; keep them field-specific.
     keyword_search: true

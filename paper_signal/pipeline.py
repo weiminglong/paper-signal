@@ -285,6 +285,7 @@ def fetch_payload(result: FetchResult) -> dict[str, Any]:
         "papers_dir": str(result.vault_path / "20_Research" / "Papers"),
         "state_path": str(_state_path(result.vault_path)),
         "language": result.config.language,
+        "report_mode": result.config.daily.report_mode,
         "domains": [domain.name for domain in result.config.research_domains],
         "deep_analysis_count": deep_n,
         "recommendation_count": result.config.daily.recommendation_count,

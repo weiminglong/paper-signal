@@ -27,14 +27,14 @@ multi-agent round-table — persona subagents debate each deep paper across two 
 rounds — then authors the daily note and per-paper notes itself. `paper-signal commit`
 marks the papers seen. The model is the Claude Code session; no separate API key is used.
 
-The round-table framework lives in `prompts/` (`roundtable.md`, `representative.md`,
-`deep_analysis.md`, `daily_synthesis.md`) and is orchestrated by
-`claude-code/skills/paper-signal/SKILL.md`.
+The round-table framework lives in `prompts/` (`roundtable.md` — protocol, output
+contract, daily synthesis, deep-note spec; `representative.md` — the persona-subagent
+payload) and is orchestrated by `claude-code/skills/paper-signal/SKILL.md`.
 
 ## Why CLI-first
 
-Schedulers should not own workflow logic. Codex Automations, cron, launchd, and GitHub
-Actions call `paper-signal run`; Claude Code drives `paper-signal fetch` for the
+Schedulers should not own workflow logic. Codex Automations, cron, and launchd call
+`paper-signal run`; Claude Code drives `paper-signal fetch` for the
 round-table.
 
 ## Future Extension Points

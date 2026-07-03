@@ -80,8 +80,8 @@ def test_state_unsee_removes_ids_and_history():
             {"paper_id": "b", "title": "B", "score": 1.0, "date": "2026-07-02"},
         ]
     )
-    assert state.last_run_date() == "2026-07-02"
-    assert state.ids_for_date("2026-07-02") == ["b"]
+    assert state.last_run_marker() == "2026-07-02"  # legacy entries fall back to date
+    assert state.ids_for_marker("2026-07-02") == ["b"]
     removed = state.unsee(["b", "zz"])
     assert removed == 1
     assert state.seen_paper_ids == {"a"}

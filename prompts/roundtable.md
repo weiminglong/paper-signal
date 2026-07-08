@@ -165,3 +165,37 @@ Readability rules for the card:
   opening the debate.
 - Keep the debate distilled (not verbatim) and honest. The full verbatim transcript, if
   wanted, belongs in the per-paper deep note, not here.
+
+## Daily synthesis (top of the note)
+
+After the per-paper round-tables, write the note's top section — what most people read
+first and often only:
+
+- **TL;DR banner** — 1–2 line blockquote: paper count, how many worth a real read, and
+  today's thread in one plain sentence.
+- **At a glance** — a table: `| # | Paper | Topic | Read? | The gist |` with short
+  nicknames, everyday topic labels, verdict icons, and a jargon-free ≤18-word gist.
+- **Today's thread** — one plain paragraph naming what connects today's papers.
+- **The map** *(optional)* — if a genuine structure connects the papers, a compact ASCII
+  network inside `<details><summary>🗺️ How today's papers connect</summary>`; skip it if
+  it would be forced.
+
+The whole top section should read in under a minute and say exactly what to open first.
+
+## Deep note (per-paper, for deep-read verdicts)
+
+Compile a standalone note at `20_Research/Papers/<paper_id>.md`, linked from the daily
+note by `[[<paper_id>|short title]]`. Frontmatter: title, arxiv_id, arxiv_url, authors,
+categories, published, `tags: ["paper", "paper-signal", "claude-roundtable"]`, verdict,
+date_analyzed. Body sections:
+
+- **Core problem** · **Main method** · **Evidence** (never invent results — if the
+  abstract is vague, say "verify in the PDF") · **Novelty** · **Limitations / open
+  questions** (Skeptic's and Empiricist's strongest points) · **Connections**
+  (`[[wikilinks]]` from the Connector) · **Practical implications** · **Reading
+  recommendation** (what to read first, what to verify).
+- **Round-table transcript** *(optional)* — the verbatim debate lives here if wanted,
+  never in the daily digest.
+
+Obsidian conventions for everything above: see `AGENTS.md` (wikilinks with aliases,
+valid YAML frontmatter, `--` for missing data).

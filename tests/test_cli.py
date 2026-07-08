@@ -37,6 +37,50 @@ def test_doctor_distinguishes_warnings_from_all_good(tmp_path, monkeypatch, caps
     assert "does not exist yet" in out
 
 
+def test_history_resolves_vault_from_config(tmp_path, monkeypatch, capsys):
+    """commit/unsee/history must fall back to the config's vault_path — the skills
+    promise one resolution order for every command."""
+    monkeypatch.delenv("OBSIDIAN_VAULT_PATH", raising=False)
+    vault = tmp_path / "vault"
+    config_path = tmp_path / "interests.yaml"
+    config_path.write_text(
+        f'vault_path: "{vault}"\nresearch_domains:\n  X:\n    keywords: [x]\n',
+        encoding="utf-8",
+    )
+    main(["history", "--config", str(config_path)])  # no --vault, no env
+    out = capsys.readouterr().out
+    assert "No papers recorded" in out
+
+
+def test_report_mode_parsed_and_in_fetch_payload(tmp_path):
+    from paper_signal.config import load_config
+    from paper_signal.pipeline import FetchResult, fetch_payload
+    from datetime import date
+    from pathlib import Path
+
+    config_path = tmp_path / "interests.yaml"
+    config_path.write_text(
+        "daily:\n  report_mode: quick\nresearch_domains:\n  X:\n    keywords: [x]\n",
+        encoding="utf-8",
+    )
+    config = load_config(config_path)
+    assert config.daily.report_mode == "quick"
+    payload = fetch_payload(
+        FetchResult(
+            config=config, vault_path=Path("/v"), run_date=date(2026, 7, 3),
+            fetched_count=0, candidate_count=0, selected=[],
+        )
+    )
+    assert payload["report_mode"] == "quick"
+
+    # Unknown values fall back to "full".
+    config_path.write_text(
+        "daily:\n  report_mode: turbo\nresearch_domains:\n  X:\n    keywords: [x]\n",
+        encoding="utf-8",
+    )
+    assert load_config(config_path).daily.report_mode == "full"
+
+
 def test_corrupt_state_yields_friendly_cli_error(tmp_path, monkeypatch, capsys):
     monkeypatch.delenv("OBSIDIAN_VAULT_PATH", raising=False)
     vault = tmp_path / "vault"

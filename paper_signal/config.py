@@ -23,11 +23,15 @@ def load_config(path: str | Path) -> AppConfig:
     vault_path = str(raw.get("vault_path") or os.environ.get("OBSIDIAN_VAULT_PATH", ""))
 
     daily_raw = raw.get("daily") or {}
+    report_mode = str(daily_raw.get("report_mode", "full")).lower()
+    if report_mode not in ("full", "quick"):
+        report_mode = "full"
     daily = DailySettings(
         candidate_limit=int(daily_raw.get("candidate_limit", 100)),
         recommendation_count=int(daily_raw.get("recommendation_count", 10)),
         deep_analysis_count=int(daily_raw.get("deep_analysis_count", 3)),
         skip_seen=bool(daily_raw.get("skip_seen", True)),
+        report_mode=report_mode,
     )
 
     sources = raw.get("sources") or {}

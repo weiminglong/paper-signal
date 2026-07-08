@@ -8,7 +8,7 @@ import urllib.error
 from pathlib import Path
 
 from paper_signal import __version__
-from paper_signal.config import ConfigError
+from paper_signal.config import ConfigError, load_config
 from paper_signal.obsidian.writer import init_vault
 from paper_signal.onboarding import doctor, init_project
 from paper_signal.pipeline import (
@@ -22,6 +22,25 @@ from paper_signal.pipeline import (
 from paper_signal.state import StateError
 
 _STATUS_ICON = {"ok": "✓", "warn": "⚠", "fail": "✗"}
+
+_VAULT_REQUIRED = (
+    "Vault path is required via --vault, OBSIDIAN_VAULT_PATH, or vault_path in the config"
+)
+
+
+def _resolve_vault(vault_arg: str | None, config_arg: str | None) -> str | None:
+    """Same resolution order for every command: --vault → env → config vault_path."""
+    if vault_arg:
+        return vault_arg
+    env_vault = os.environ.get("OBSIDIAN_VAULT_PATH")
+    if env_vault:
+        return env_vault
+    if config_arg:
+        try:
+            return load_config(config_arg).vault_path or None
+        except ConfigError:
+            return None
+    return None
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -67,8 +86,8 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         print(f"Selected papers: {result.selected_count}")
         if result.kept_existing:
             if result.kept_reason == "not-quick-scan":
-                print(f"Kept existing note (not written by the quick scan): {result.daily_note_path}")
-                print("Tip: today's note came from the round-table or by hand; use --force to replace it.")
+                print(f"Kept existing note (not written by the quick list): {result.daily_note_path}")
+                print("Tip: today's note came from the full report or by hand; use --force to replace it.")
             else:
                 print(
                     f"Kept existing note (this run matched 0 new papers): {result.daily_note_path}"
@@ -91,9 +110,9 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         return
 
     if args.command == "commit":
-        vault = args.vault or os.environ.get("OBSIDIAN_VAULT_PATH")
+        vault = _resolve_vault(args.vault, args.config)
         if not vault:
-            raise SystemExit("Vault path is required via --vault or OBSIDIAN_VAULT_PATH")
+            raise SystemExit(_VAULT_REQUIRED)
         ids, entries = _collect_ids(args.ids, args.from_fetch)
         if not ids:
             raise SystemExit("No paper ids to commit (use --ids or --from-fetch)")
@@ -102,9 +121,9 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         return
 
     if args.command == "unsee":
-        vault = args.vault or os.environ.get("OBSIDIAN_VAULT_PATH")
+        vault = _resolve_vault(args.vault, args.config)
         if not vault:
-            raise SystemExit("Vault path is required via --vault or OBSIDIAN_VAULT_PATH")
+            raise SystemExit(_VAULT_REQUIRED)
         if not (args.all or args.last_run or args.ids):
             raise SystemExit("Nothing to unsee (use --last-run, --all, or --ids)")
         ids = [t.strip() for t in (args.ids or "").split(",") if t.strip()]
@@ -113,9 +132,9 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         return
 
     if args.command == "history":
-        vault = args.vault or os.environ.get("OBSIDIAN_VAULT_PATH")
+        vault = _resolve_vault(args.vault, args.config)
         if not vault:
-            raise SystemExit("Vault path is required via --vault or OBSIDIAN_VAULT_PATH")
+            raise SystemExit(_VAULT_REQUIRED)
         entries = recent_history(Path(vault), days=args.days)
         if not entries:
             print(f"No papers recorded in the last {args.days} day(s).")
@@ -164,9 +183,9 @@ def _dispatch(args: argparse.Namespace, parser: argparse.ArgumentParser) -> None
         return
 
     if args.command == "init-vault":
-        vault = args.vault or os.environ.get("OBSIDIAN_VAULT_PATH")
+        vault = _resolve_vault(args.vault, getattr(args, "config", None))
         if not vault:
-            raise SystemExit("Vault path is required via --vault or OBSIDIAN_VAULT_PATH")
+            raise SystemExit(_VAULT_REQUIRED)
         init_vault(Path(vault))
         print(f"Initialized vault folders under: {vault}")
         return
@@ -208,6 +227,19 @@ def _collect_ids(ids_arg: str | None, from_fetch: str | None) -> tuple[list[str]
     return unique, entries
 
 
+def _add_config_and_vault(subparser: argparse.ArgumentParser) -> None:
+    subparser.add_argument(
+        "--config",
+        default=os.environ.get("PAPER_SIGNAL_CONFIG", "config/interests.yaml"),
+        help="Path to interests YAML config",
+    )
+    subparser.add_argument(
+        "--vault",
+        default=os.environ.get("OBSIDIAN_VAULT_PATH"),
+        help="Path to Obsidian vault (default: config vault_path or OBSIDIAN_VAULT_PATH)",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="paper-signal")
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -216,16 +248,7 @@ def build_parser() -> argparse.ArgumentParser:
     run = subparsers.add_parser(
         "run", help="Fetch, score, and write the daily note (deterministic quick scan)"
     )
-    run.add_argument(
-        "--config",
-        default=os.environ.get("PAPER_SIGNAL_CONFIG", "config/interests.yaml"),
-        help="Path to interests YAML config",
-    )
-    run.add_argument(
-        "--vault",
-        default=os.environ.get("OBSIDIAN_VAULT_PATH"),
-        help="Path to Obsidian vault",
-    )
+    _add_config_and_vault(run)
     run.add_argument("--dry-run", action="store_true", help="Render without writing state or notes")
     run.add_argument(
         "--no-mark-seen",
@@ -235,33 +258,20 @@ def build_parser() -> argparse.ArgumentParser:
     run.add_argument(
         "--force",
         action="store_true",
-        help="Replace today's note even if it was authored by the round-table or by hand",
+        help="Replace today's note even if it was authored by the full report or by hand",
     )
 
     fetch = subparsers.add_parser(
         "fetch",
         help="Fetch and score candidates, emit JSON for an agent to analyze (does not write)",
     )
-    fetch.add_argument(
-        "--config",
-        default=os.environ.get("PAPER_SIGNAL_CONFIG", "config/interests.yaml"),
-        help="Path to interests YAML config",
-    )
-    fetch.add_argument(
-        "--vault",
-        default=os.environ.get("OBSIDIAN_VAULT_PATH"),
-        help="Path to Obsidian vault",
-    )
+    _add_config_and_vault(fetch)
 
     commit = subparsers.add_parser(
         "commit",
         help="Mark papers as seen after an agent has written the note",
     )
-    commit.add_argument(
-        "--vault",
-        default=os.environ.get("OBSIDIAN_VAULT_PATH"),
-        help="Path to Obsidian vault",
-    )
+    _add_config_and_vault(commit)
     commit.add_argument("--ids", help="Comma-separated paper ids to mark seen")
     commit.add_argument(
         "--from-fetch",
@@ -271,11 +281,7 @@ def build_parser() -> argparse.ArgumentParser:
     unsee_parser = subparsers.add_parser(
         "unsee", help="Forget seen papers so they can be recommended again"
     )
-    unsee_parser.add_argument(
-        "--vault",
-        default=os.environ.get("OBSIDIAN_VAULT_PATH"),
-        help="Path to Obsidian vault",
-    )
+    _add_config_and_vault(unsee_parser)
     unsee_parser.add_argument(
         "--last-run", action="store_true", help="Forget the most recent run's papers"
     )
@@ -285,32 +291,18 @@ def build_parser() -> argparse.ArgumentParser:
     history_parser = subparsers.add_parser(
         "history", help="Show recently recommended papers by day"
     )
-    history_parser.add_argument(
-        "--vault",
-        default=os.environ.get("OBSIDIAN_VAULT_PATH"),
-        help="Path to Obsidian vault",
-    )
+    _add_config_and_vault(history_parser)
     history_parser.add_argument(
         "--days", type=int, default=7,
         help="How many days back, inclusive of the boundary day (default 7)",
     )
 
     init = subparsers.add_parser("init", help="Scaffold config + vault for a first run")
-    init.add_argument(
-        "--config",
-        default=os.environ.get("PAPER_SIGNAL_CONFIG", "config/interests.yaml"),
-        help="Where to write the interests config",
-    )
-    init.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT_PATH"))
+    _add_config_and_vault(init)
     init.add_argument("--force", action="store_true", help="Overwrite an existing config")
 
     doctor_parser = subparsers.add_parser("doctor", help="Check that the setup is ready to run")
-    doctor_parser.add_argument(
-        "--config",
-        default=os.environ.get("PAPER_SIGNAL_CONFIG", "config/interests.yaml"),
-        help="Path to interests YAML config",
-    )
-    doctor_parser.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT_PATH"))
+    _add_config_and_vault(doctor_parser)
     doctor_parser.add_argument(
         "--offline", action="store_true", help="Skip the arXiv reachability check"
     )
@@ -318,6 +310,6 @@ def build_parser() -> argparse.ArgumentParser:
     init_vault_parser = subparsers.add_parser(
         "init-vault", help="Create required Obsidian directories"
     )
-    init_vault_parser.add_argument("--vault", default=os.environ.get("OBSIDIAN_VAULT_PATH"))
+    _add_config_and_vault(init_vault_parser)
 
     return parser
